@@ -5,7 +5,7 @@ const App = () => {
   const [gameStarted, setGameStarted] = useState(false);
   const [characterName, setCharacterName] = useState('');
   const [characterIcon, setCharacterIcon] = useState('🧙');
-  const [showCharacterCreation, setShowCharacterCreation] = useState(true);
+  const [showCharacterCreation, setShowCharacterCreation] = useState(false);
   const [showLoadScreen, setShowLoadScreen] = useState(false);
   const [currentSaveSlot, setCurrentSaveSlot] = useState(null);
   
@@ -52,7 +52,6 @@ const App = () => {
   const [attackTimer, setAttackTimer] = useState(0);
   const [levelUpPoints, setLevelUpPoints] = useState(0);
   const [currentDungeon, setCurrentDungeon] = useState(1);
-  const [showDungeonSelect, setShowDungeonSelect] = useState(false);
   const [equipment, setEquipment] = useState({ 
     weapon: null, 
     helmet: null, 
@@ -65,7 +64,7 @@ const App = () => {
   const [showInventory, setShowInventory] = useState(false);
   const [lootedItem, setLootedItem] = useState(null);
   const [mana, setMana] = useState(100);
-  const [maxMana, setMaxMana] = useState(100);
+  const [maxMana] = useState(100);
   const [equippedSpells, setEquippedSpells] = useState(['fireball', 'slow', 'stun', 'shock']);
   const [showSpellbook, setShowSpellbook] = useState(false);
   const [showShop, setShowShop] = useState(false);
@@ -104,14 +103,18 @@ const App = () => {
   const enemyRef = useRef(enemy);
   const manaRegenRef = useRef(null);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const saves = [];
     for (let i = 1; i <= 3; i++) {
       if (localStorage.getItem(`rpgSave${i}`)) saves.push(i);
     }
-    if (saves.length > 0 && !showLoadScreen) {
+    if (saves.length > 0 && !gameStarted && !showLoadScreen && !showCharacterCreation) {
       setShowLoadScreen(true);
       setShowCharacterCreation(false);
+    } else if (saves.length === 0 && !gameStarted && !showLoadScreen && !showCharacterCreation) {
+      setShowCharacterCreation(true);
+      setShowLoadScreen(false);
     }
   }, []);
 
@@ -135,6 +138,7 @@ const App = () => {
     return () => clearInterval(manaRegenRef.current);
   }, [maxMana, player.vitality]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const hpRegenInterval = setInterval(() => {
       setPlayer(prev => {
@@ -150,7 +154,7 @@ const App = () => {
       });
     }, 2000);
     return () => clearInterval(hpRegenInterval);
-  }, [combat, player.vitality]);
+  }, [combat]);
 
   const generateItem = (enemyLevel, forceType = null) => {
     const types = ['weapon', 'helmet', 'chest', 'legs', 'boots', 'accessory'];
@@ -747,8 +751,8 @@ const App = () => {
   const resetGame = () => {
     if (window.confirm('Voltar ao menu inicial?')) {
       setGameStarted(false);
-      setShowLoadScreen(true);
       setShowCharacterCreation(false);
+      setShowLoadScreen(true);
     }
   };
 
@@ -773,8 +777,9 @@ const App = () => {
     }));
     
     setCurrentSaveSlot(slot);
-    setGameStarted(true);
     setShowCharacterCreation(false);
+    setShowLoadScreen(false);
+    setGameStarted(true);
   };
 
   const loadGame = (slot) => {
@@ -792,9 +797,9 @@ const App = () => {
       setMana(data.mana);
       setCurrentDungeon(data.currentDungeon || 1);
       setCurrentSaveSlot(slot);
-      setGameStarted(true);
-      setShowCharacterCreation(false);
       setShowLoadScreen(false);
+      setShowCharacterCreation(false);
+      setGameStarted(true);
     } catch (e) {
       window.alert('Erro ao carregar jogo!');
     }
@@ -810,8 +815,6 @@ const App = () => {
       if (saves.length === 0) {
         setShowLoadScreen(false);
         setShowCharacterCreation(true);
-      } else {
-        window.location.reload();
       }
     }
   };
@@ -844,10 +847,12 @@ const App = () => {
     setCharacterName('');
     setCharacterIcon('🧙');
     setCurrentSaveSlot(null);
+    setGameStarted(false);
     setShowLoadScreen(false);
     setShowCharacterCreation(true);
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const handleKeyPress = (e) => {
       if (e.key === ' ' && lootedItem) {
@@ -895,6 +900,7 @@ const App = () => {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [combat, levelUpPoints, enemy, mana, equippedSpells, nextAttackKey, lootedItem, player.bossCounter]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (combat && enemy) {
       const bonus = getTotalStats();
