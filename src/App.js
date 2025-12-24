@@ -11,18 +11,18 @@ const App = () => {
   
   const getIconStats = (icon) => {
     const stats = {
-      '🧙': { strength: 8, agility: 8, intelligence: 14, vitality: 12 },
-      '🧙‍♀️': { strength: 8, agility: 8, intelligence: 16, vitality: 10 },
-      '🧙‍♂️': { strength: 8, agility: 8, intelligence: 15, vitality: 11 },
-      '🧝': { strength: 10, agility: 14, intelligence: 8, vitality: 10 },
-      '🧝‍♀️': { strength: 10, agility: 12, intelligence: 8, vitality: 12 },
-      '🧝‍♂️': { strength: 10, agility: 13, intelligence: 8, vitality: 11 },
-      '🦸': { strength: 14, agility: 10, intelligence: 8, vitality: 10 },
-      '🦸‍♀️': { strength: 16, agility: 10, intelligence: 8, vitality: 8 },
-      '🦸‍♂️': { strength: 15, agility: 10, intelligence: 8, vitality: 9 },
-      '🦹': { strength: 10, agility: 8, intelligence: 10, vitality: 14 },
-      '🦹‍♀️': { strength: 10, agility: 9, intelligence: 10, vitality: 13 },
-      '🦹‍♂️': { strength: 11, agility: 9, intelligence: 11, vitality: 11 }
+      '🧙': { class: 'Mago', gender: 'Masculino', strength: 8, agility: 8, intelligence: 14, vitality: 12 },
+      '🧙‍♀️': { class: 'Mago', gender: 'Feminino', strength: 8, agility: 8, intelligence: 16, vitality: 10 },
+      '🧙‍♂️': { class: 'Mago', gender: 'Masculino', strength: 8, agility: 8, intelligence: 15, vitality: 11 },
+      '🧝': { class: 'Elfo', gender: 'Feminino', strength: 10, agility: 14, intelligence: 8, vitality: 10 },
+      '🧝‍♀️': { class: 'Elfo', gender: 'Feminino', strength: 10, agility: 12, intelligence: 8, vitality: 12 },
+      '🧝‍♂️': { class: 'Elfo', gender: 'Masculino', strength: 10, agility: 13, intelligence: 8, vitality: 11 },
+      '🦸': { class: 'Guerreiro', gender: 'Masculino', strength: 14, agility: 10, intelligence: 8, vitality: 10 },
+      '🦸‍♀️': { class: 'Guerreiro', gender: 'Feminino', strength: 16, agility: 10, intelligence: 8, vitality: 8 },
+      '🦸‍♂️': { class: 'Guerreiro', gender: 'Masculino', strength: 15, agility: 10, intelligence: 8, vitality: 9 },
+      '🦹': { class: 'Ladino', gender: 'Masculino', strength: 10, agility: 8, intelligence: 10, vitality: 14 },
+      '🦹‍♀️': { class: 'Ladino', gender: 'Feminino', strength: 10, agility: 9, intelligence: 10, vitality: 13 },
+      '🦹‍♂️': { class: 'Ladino', gender: 'Masculino', strength: 11, agility: 9, intelligence: 11, vitality: 11 }
     };
     return stats[icon] || { strength: 10, agility: 10, intelligence: 10, vitality: 10 };
   };
@@ -937,29 +937,36 @@ const App = () => {
 
     return (
       <div className="character-creation">
-        <div className="creation-modal">
-          <h1>⚔️ Selecionar Personagem</h1>
-          <div style={{ marginBottom: '20px' }}>
-            {saves.map(({ slot, data }) => (
-              <div key={slot} style={{ background: 'rgba(255,255,255,0.1)', padding: '20px', borderRadius: '10px', marginBottom: '15px', border: '2px solid transparent', transition: 'all 0.2s', position: 'relative' }}>
-                <button onClick={() => deleteSave(slot)} style={{ position: 'absolute', top: '10px', right: '10px', background: '#f44336', border: 'none', color: 'white', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer', fontSize: '0.9em' }}>🗑️</button>
-                <div onClick={() => loadGame(slot)} style={{ cursor: 'pointer' }} onMouseEnter={(e) => e.currentTarget.parentElement.style.borderColor = '#667eea'} onMouseLeave={(e) => e.currentTarget.parentElement.style.borderColor = 'transparent'}>
-                  <div style={{ fontSize: '3em', textAlign: 'center', marginBottom: '10px' }}>{data.characterIcon}</div>
-                  <h3 style={{ textAlign: 'center', marginBottom: '10px' }}>Slot {slot}: {data.characterName}</h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.9em' }}>
-                    <span>🎯 Nível: {data.player.level}</span>
-                    <span>❤️ HP: {data.player.hp}/{data.player.maxHp}</span>
-                    <span>💪 Força: {data.player.strength}</span>
-                    <span>⚡ Agilidade: {data.player.agility}</span>
-                    <span>🧠 Inteligência: {data.player.intelligence}</span>
-                    <span>❤️ Vitalidade: {data.player.vitality}</span>
-                    <span>💀 Abates: {data.player.kills}</span>
+        <h1 className="game-title">SABUGADA</h1>
+        <div className="creation-content">
+          <div className="creation-modal" style={{ maxHeight: 'none', overflowY: 'visible' }}>
+            <h1>⚔️ Selecionar Personagem</h1>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
+              {saves.map(({ slot, data }) => (
+                <div key={slot} style={{ background: 'rgba(255,255,255,0.1)', padding: '15px', borderRadius: '10px', border: '2px solid transparent', transition: 'all 0.2s', position: 'relative' }}>
+                  <button onClick={() => deleteSave(slot)} style={{ position: 'absolute', top: '10px', right: '10px', background: '#f44336', border: 'none', color: 'white', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer', fontSize: '0.9em' }}>🗑️</button>
+                  <div onClick={() => loadGame(slot)} style={{ cursor: 'pointer' }} onMouseEnter={(e) => e.currentTarget.parentElement.style.borderColor = '#667eea'} onMouseLeave={(e) => e.currentTarget.parentElement.style.borderColor = 'transparent'}>
+                    <div style={{ fontSize: '2em', textAlign: 'center', marginBottom: '8px' }}>{data.characterIcon}</div>
+                    <h3 style={{ textAlign: 'center', marginBottom: '8px', fontSize: '1em' }}>Slot {slot}: {data.characterName}</h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px', fontSize: '0.8em' }}>
+                      <span>⚔️ Classe: {getIconStats(data.characterIcon).class}</span>
+                      <span>👤 Gênero: {getIconStats(data.characterIcon).gender}</span>
+                      <span>🎯 Nível: {data.player.level}</span>
+                      <span>❤️ HP: {data.player.hp}/{data.player.maxHp}</span>
+                      <span>💪 Força: {data.player.strength}</span>
+                      <span>⚡ Agilidade: {data.player.agility}</span>
+                      <span>🧠 Inteligência: {data.player.intelligence}</span>
+                      <span>❤️ Vitalidade: {data.player.vitality}</span>
+                      <span>💀 Abates: {data.player.kills}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-          <button onClick={startNewGameFromLoad} className="btn-primary" style={{ width: '100%' }}>Novo Jogo</button>
+        </div>
+        <div className="creation-actions">
+          <button onClick={startNewGameFromLoad} className="btn-primary">Novo Jogo</button>
         </div>
       </div>
     );
@@ -970,30 +977,38 @@ const App = () => {
     const iconStats = getIconStats(characterIcon);
     return (
       <div className="character-creation">
-        <div className="creation-modal">
-          <h1>⚔️ Criar Personagem</h1>
-          <div className="creation-section">
-            <label>Nome:</label>
-            <input type="text" value={characterName} onChange={(e) => setCharacterName(e.target.value)} placeholder="Digite o nome..." maxLength={20} autoFocus />
-          </div>
-          <div className="creation-section">
-            <label>Escolha seu Ícone:</label>
-            <div className="icon-selector">
-              {icons.map(icon => (
-                <div key={icon} className={`icon-option ${characterIcon === icon ? 'selected' : ''}`} onClick={() => setCharacterIcon(icon)}>{icon}</div>
-              ))}
+        <h1 className="game-title">SABUGADA</h1>
+        <div className="creation-content">
+          <div className="creation-modal">
+            <h1>⚔️ Criar Personagem</h1>
+            <div className="creation-section">
+              <label>Nome:</label>
+              <input type="text" value={characterName} onChange={(e) => setCharacterName(e.target.value)} placeholder="Digite o nome..." maxLength={20} autoFocus />
+            </div>
+            <div className="creation-section">
+              <label>Escolha sua classe:</label>
+              <div className="icon-selector">
+                {icons.map(icon => (
+                  <div key={icon} className={`icon-option ${characterIcon === icon ? 'selected' : ''}`} onClick={() => setCharacterIcon(icon)}>{icon}</div>
+                ))}
+              </div>
+            </div>
+            <div className="creation-section">
+              <label>Stats Iniciais:</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '0.9em', marginTop: '10px' }}>
+                <span>⚔️ Classe: {iconStats.class}</span>
+                <span>👤 Gênero: {iconStats.gender}</span>
+                <span>💪 Força: {iconStats.strength}</span>
+                <span>⚡ Agilidade: {iconStats.agility}</span>
+                <span>🧠 Inteligência: {iconStats.intelligence}</span>
+                <span>❤️ Vitalidade: {iconStats.vitality}</span>
+              </div>
             </div>
           </div>
-          <div className="creation-section">
-            <label>Stats Iniciais:</label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '0.9em', marginTop: '10px' }}>
-              <span>💪 Força: {iconStats.strength}</span>
-              <span>⚡ Agilidade: {iconStats.agility}</span>
-              <span>🧠 Inteligência: {iconStats.intelligence}</span>
-              <span>❤️ Vitalidade: {iconStats.vitality}</span>
-            </div>
-          </div>
-          <button onClick={startNewGame} className="btn-primary" style={{ width: '100%' }}>Começar Aventura</button>
+        </div>
+        <div className="creation-actions">
+          <button onClick={startNewGame} className="btn-primary">Começar Aventura</button>
+          <button onClick={() => { setShowCharacterCreation(false); setShowLoadScreen(true); }} className="btn-primary" style={{ background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' }}>Carregar Jogo</button>
         </div>
       </div>
     );
@@ -1815,10 +1830,6 @@ const App = () => {
           <button className="btn-sidebar" onClick={saveGame}>
             💾 Salvar [S]
           </button>
-
-          <button className="btn-sidebar btn-reset" onClick={resetGame}>
-            🚪 Sair
-          </button>
         </div>
 
         <div className="spells">
@@ -1835,6 +1846,10 @@ const App = () => {
             </button>
           ))}
         </div>
+
+        <button className="btn-sidebar btn-reset" onClick={resetGame} style={{ width: '100%', marginTop: '5px' }}>
+          🚪 Sair
+        </button>
       </div>
 
       <div className="main-content">

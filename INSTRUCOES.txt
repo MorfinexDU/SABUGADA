@@ -1,0 +1,24 @@
+INSTRUÇÕES PARA ADICIONAR CLASSE E GÊNERO:
+
+1. Na função getIconStats, adicionar class e gender a cada ícone:
+   - '🧙': adicionar class: 'Mago', gender: 'Neutro'
+   - '🧙♀️': adicionar class: 'Maga', gender: 'Feminino'
+   - '🧙♂️': adicionar class: 'Mago', gender: 'Masculino'
+   - '🧝': adicionar class: 'Elfo', gender: 'Neutro'
+   - '🧝♀️': adicionar class: 'Elfa', gender: 'Feminino'
+   - '🧝♂️': adicionar class: 'Elfo', gender: 'Masculino'
+   - '🦸': adicionar class: 'Guerreiro', gender: 'Neutro'
+   - '🦸♀️': adicionar class: 'Guerreira', gender: 'Feminino'
+   - '🦸♂️': adicionar class: 'Guerreiro', gender: 'Masculino'
+   - '🦹': adicionar class: 'Paladino', gender: 'Neutro'
+   - '🦹♀️': adicionar class: 'Paladina', gender: 'Feminino'
+   - '🦹♂️': adicionar class: 'Paladino', gender: 'Masculino'
+
+2. No return default, adicionar: class: 'Aventureiro', gender: 'Neutro'
+
+3. Na tela de criação, após o icon-selector, adicionar:
+   <div style={{ textAlign: 'center', marginTop: '15px', fontSize: '1.1em', fontWeight: 'bold', color: '#FFD700' }}>
+     {iconStats.class} - {iconStats.gender}
+   </div>
+
+Por favor, faça essas alterações manualmente no arquivo App.js
