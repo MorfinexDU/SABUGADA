@@ -592,26 +592,20 @@ const App = () => {
   const gameOver = () => {
     setCombat(false);
     clearInterval(enemyTimerRef.current);
-    addLog('VOCÊ MORREU! Reiniciando...');
     
-    setTimeout(() => {
-      setPlayer({
-        level: 1,
-        xp: 0,
-        xpToNext: 100,
-        hp: 100,
-        maxHp: 100,
-        strength: 10,
-        agility: 10,
-        intelligence: 10,
-        vitality: 10,
-        kills: 0,
-        bossCounter: 0,
-        unlockedDungeons: 1
-      });
-      setEnemy(null);
-      setLog([]);
-    }, 2000);
+    const xpLost = Math.floor(player.xp * 0.5);
+    const newXp = Math.max(0, player.xp - xpLost);
+    const bonus = getTotalStats();
+    
+    setPlayer(prev => ({
+      ...prev,
+      hp: prev.maxHp + bonus.maxHp,
+      xp: newXp
+    }));
+    
+    addLog(`💀 VOCÊ MORREU! Perdeu ${xpLost} XP`);
+    setEnemy(null);
+    setLog([]);
   };
 
   const getPlayerColor = () => {
