@@ -69,25 +69,26 @@ const App = () => {
   const [equippedSpells, setEquippedSpells] = useState(['fireball', 'slow', 'stun', 'shock']);
   const [showSpellbook, setShowSpellbook] = useState(false);
   const [showShop, setShowShop] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const [allSpells] = useState([
-    { id: 'fireball', name: 'Bola de Fogo', cost: 20, damage: 30, type: 'damage', icon: '🔥', unlockLevel: 1 },
-    { id: 'slow', name: 'Lentidão', cost: 15, duration: 5000, type: 'slow', icon: '❄️', unlockLevel: 1 },
-    { id: 'stun', name: 'Paralisia', cost: 30, duration: 3000, type: 'stun', icon: '⚡', unlockLevel: 1 },
-    { id: 'shock', name: 'Eletrificar', cost: 25, duration: 8000, type: 'shock', icon: '⚡', unlockLevel: 1 },
-    { id: 'meteor', name: 'Meteoro', cost: 40, damage: 80, type: 'damage', icon: '☄️', unlockLevel: 10 },
-    { id: 'heal', name: 'Cura', cost: 30, heal: 50, type: 'heal', icon: '❤️', unlockLevel: 10 },
-    { id: 'freeze', name: 'Congelar', cost: 35, duration: 5000, dps: 8, type: 'freeze', icon: '❄️', unlockLevel: 20 },
-    { id: 'poison', name: 'Veneno', cost: 20, duration: 10000, dps: 5, type: 'poison', icon: '🧪', unlockLevel: 20 },
-    { id: 'lightning', name: 'Relâmpago', cost: 50, damage: 120, type: 'damage', icon: '⚡', unlockLevel: 30 },
-    { id: 'shield', name: 'Escudo', cost: 40, duration: 10000, type: 'shield', icon: '🛡️', unlockLevel: 30 },
-    { id: 'drain', name: 'Drenar Vida', cost: 35, damage: 40, heal: 40, type: 'drain', icon: '🧛', unlockLevel: 40 },
-    { id: 'haste', name: 'Acelerar', cost: 25, duration: 8000, type: 'haste', icon: '💨', unlockLevel: 40 },
-    { id: 'inferno', name: 'Inferno', cost: 60, damage: 150, type: 'damage', icon: '🔥', unlockLevel: 50 },
-    { id: 'reflect', name: 'Refletir', cost: 45, duration: 12000, type: 'reflect', icon: '🔮', unlockLevel: 50 },
-    { id: 'timewarp', name: 'Distorcer Tempo', cost: 50, duration: 6000, type: 'timewarp', icon: '⏳', unlockLevel: 60 },
-    { id: 'nova', name: 'Nova Arcana', cost: 70, damage: 200, type: 'damage', icon: '✨', unlockLevel: 60 },
-    { id: 'invulnerable', name: 'Invulnerável', cost: 80, duration: 5000, type: 'invulnerable', icon: '👼', unlockLevel: 70 },
-    { id: 'apocalypse', name: 'Apocalipse', cost: 100, damage: 300, type: 'damage', icon: '🔪', unlockLevel: 70 }
+    { id: 'fireball', name: 'Bola de Fogo', cost: 20, damage: 30, type: 'damage', icon: '🔥', unlockLevel: 1, desc: 'Lança uma bola de fogo causando dano mágico' },
+    { id: 'slow', name: 'Lentidão', cost: 15, duration: 5000, type: 'slow', icon: '❄️', unlockLevel: 1, desc: 'Reduz a velocidade de ataque do inimigo por 5s' },
+    { id: 'stun', name: 'Paralisia', cost: 55, duration: 3000, type: 'stun', icon: '⚡', unlockLevel: 1, desc: 'Paralisa o inimigo por 3s, congelando seu contador de ataque' },
+    { id: 'shock', name: 'Eletrificar', cost: 25, duration: 8000, type: 'shock', icon: '⚡', unlockLevel: 1, desc: 'Aumenta o dano recebido pelo inimigo em 50% por 8s' },
+    { id: 'meteor', name: 'Meteoro', cost: 40, damage: 80, type: 'damage', icon: '☄️', unlockLevel: 10, desc: 'Invoca um meteoro causando grande dano mágico' },
+    { id: 'heal', name: 'Cura', cost: 30, heal: 50, type: 'heal', icon: '❤️', unlockLevel: 10, desc: 'Restaura HP baseado em Inteligência' },
+    { id: 'freeze', name: 'Congelar', cost: 35, duration: 5000, dps: 8, type: 'freeze', icon: '❄️', unlockLevel: 20, desc: 'Congela o inimigo por 5s causando 8 de dano por segundo' },
+    { id: 'poison', name: 'Veneno', cost: 20, duration: 10000, dps: 5, type: 'poison', icon: '🧪', unlockLevel: 20, desc: 'Envenena o inimigo por 10s causando 5 de dano por segundo' },
+    { id: 'lightning', name: 'Relâmpago', cost: 50, damage: 120, type: 'damage', icon: '⚡', unlockLevel: 30, desc: 'Ataque elétrico devastador' },
+    { id: 'shield', name: 'Escudo', cost: 40, duration: 10000, type: 'shield', icon: '🛡️', unlockLevel: 30, desc: 'Reduz o dano recebido em 50% por 10s' },
+    { id: 'drain', name: 'Drenar Vida', cost: 35, damage: 40, heal: 40, type: 'drain', icon: '🧛', unlockLevel: 40, desc: 'Causa dano e restaura HP' },
+    { id: 'haste', name: 'Acelerar', cost: 25, duration: 8000, type: 'haste', icon: '💨', unlockLevel: 40, desc: 'Aumenta sua velocidade de ataque por 8s' },
+    { id: 'inferno', name: 'Inferno', cost: 60, damage: 150, type: 'damage', icon: '🔥', unlockLevel: 50, desc: 'Chamas infernais causam dano massivo' },
+    { id: 'reflect', name: 'Refletir', cost: 45, duration: 12000, type: 'reflect', icon: '🔮', unlockLevel: 50, desc: 'Reflete 30% do dano recebido por 12s' },
+    { id: 'timewarp', name: 'Distorcer Tempo', cost: 50, duration: 6000, type: 'timewarp', icon: '⏳', unlockLevel: 60, desc: 'Paralisa e desacelera o inimigo por 6s' },
+    { id: 'nova', name: 'Nova Arcana', cost: 70, damage: 200, type: 'damage', icon: '✨', unlockLevel: 60, desc: 'Explosão arcana de poder supremo' },
+    { id: 'invulnerable', name: 'Invulnerável', cost: 80, duration: 5000, type: 'invulnerable', icon: '👼', unlockLevel: 70, desc: 'Torna-se invulnerável por 5s' },
+    { id: 'apocalypse', name: 'Apocalipse', cost: 100, damage: 300, type: 'damage', icon: '🔪', unlockLevel: 70, desc: 'O fim de todas as coisas' }
   ]);
   const [enemyEffects, setEnemyEffects] = useState({ slow: false, stun: false, shock: false, poison: false });
   const [playerEffects, setPlayerEffects] = useState({ shield: false, haste: false, reflect: false, invulnerable: false });
@@ -151,9 +152,9 @@ const App = () => {
     return () => clearInterval(hpRegenInterval);
   }, [combat, player.vitality]);
 
-  const generateItem = (enemyLevel) => {
+  const generateItem = (enemyLevel, forceType = null) => {
     const types = ['weapon', 'helmet', 'chest', 'legs', 'boots', 'accessory'];
-    const type = types[Math.floor(Math.random() * types.length)];
+    const type = forceType || types[Math.floor(Math.random() * types.length)];
     const rarity = Math.random();
     
     let rarityName, multiplier, numStats;
@@ -179,6 +180,7 @@ const App = () => {
       type,
       name: `${rarityName} ${typeNames[type]}`,
       rarity: rarityName,
+      itemLevel: enemyLevel,
       strength: 0,
       agility: 0,
       intelligence: 0,
@@ -259,15 +261,16 @@ const App = () => {
     const item = inventory.find(i => i.id === itemId);
     if (!item) return;
     
-    const rarityValues = {
-      'Comum': 1,
-      'Mágico': 3,
-      'Raro': 8,
-      'Épico': 20,
-      'Lendário': 50
+    const rarityMultipliers = {
+      'Comum': 0.5,
+      'Mágico': 1,
+      'Raro': 2,
+      'Épico': 4,
+      'Lendário': 8
     };
     
-    const sabugosGained = rarityValues[item.rarity] || 1;
+    const itemLevel = item.itemLevel || 1;
+    const sabugosGained = Math.max(1, Math.floor(itemLevel * rarityMultipliers[item.rarity]));
     setPlayer(prev => ({ ...prev, sabugos: prev.sabugos + sabugosGained }));
     setInventory(prev => prev.filter(i => i.id !== itemId));
     addLog(`Item descartado! +${sabugosGained} 🌽`);
@@ -644,7 +647,7 @@ const App = () => {
       ...prev,
       level: newLevel,
       xp: overflow,
-      xpToNext: Math.floor(prev.xpToNext * 1.8),
+      xpToNext: Math.floor(prev.xpToNext * 1.2),
       maxHp: prev.maxHp + 15 + bonus.maxHp,
       hp: prev.maxHp + 15 + bonus.maxHp,
       kills,
@@ -847,6 +850,10 @@ const App = () => {
 
   useEffect(() => {
     const handleKeyPress = (e) => {
+      if (e.key === ' ' && lootedItem) {
+        setLootedItem(null);
+        return;
+      }
       if (e.key === nextAttackKey) {
         if (levelUpPoints === 0 && combat && enemy?.hp > 0) {
           playerAttack();
@@ -857,11 +864,17 @@ const App = () => {
           startCombat();
         }
       }
+      if ((e.key === 'e' || e.key === 'E') && !combat && levelUpPoints === 0 && (player.bossCounter + 1) % 10 === 0) {
+        escapeBoss();
+      }
       if (e.key === 'i' || e.key === 'I') {
         setShowInventory(prev => !prev);
       }
       if (e.key === 'm' || e.key === 'M') {
         setShowSpellbook(prev => !prev);
+      }
+      if (e.key === 'h' || e.key === 'H') {
+        setShowHelp(prev => !prev);
       }
       if (e.key === 's' || e.key === 'S') {
         if (!combat) saveGame();
@@ -880,7 +893,7 @@ const App = () => {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [combat, levelUpPoints, enemy, mana, equippedSpells, nextAttackKey]);
+  }, [combat, levelUpPoints, enemy, mana, equippedSpells, nextAttackKey, lootedItem, player.bossCounter]);
 
   useEffect(() => {
     if (combat && enemy) {
@@ -899,7 +912,9 @@ const App = () => {
       }, currentSpeed);
       
       timerIntervalRef.current = setInterval(() => {
-        setAttackTimer(prev => Math.max(0, prev - 100));
+        if (!enemyEffects.stun) {
+          setAttackTimer(prev => Math.max(0, prev - 100));
+        }
       }, 100);
     }
 
@@ -907,7 +922,7 @@ const App = () => {
       clearInterval(enemyTimerRef.current);
       clearInterval(timerIntervalRef.current);
     };
-  }, [combat, enemy?.name, enemyEffects.slow]);
+  }, [combat, enemy?.name, enemyEffects.slow, enemyEffects.stun]);
 
   if (showLoadScreen) {
     const saves = [];
@@ -1085,6 +1100,67 @@ const App = () => {
         </div>
       )}
 
+      {showHelp && (
+        <div className="modal-overlay" onClick={() => setShowHelp(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '700px', maxHeight: '80vh', overflowY: 'auto' }}>
+            <h2>❓ Guia do Jogo</h2>
+            <button className="close-btn" onClick={() => setShowHelp(false)}>×</button>
+            
+            <div style={{ textAlign: 'left', lineHeight: '1.6' }}>
+              <h3>🎮 Como Jogar</h3>
+              <p>• Pressione [B] ou clique em "Buscar Inimigo" para iniciar combate</p>
+              <p>• Alterne entre [←] e [→] para atacar o inimigo</p>
+              <p>• Use [Q], [W], [E], [R] para lançar magias durante o combate</p>
+              <p>• A cada 10 lutas, um BOSS aparecerá - você pode escapar se quiser</p>
+              
+              <h3>💪 Atributos</h3>
+              <p>• <strong>Força</strong>: Aumenta o dano base dos ataques físicos</p>
+              <p>• <strong>Agilidade</strong>: Aumenta chance de crítico (x2 dano)</p>
+              <p>• <strong>Inteligência</strong>: Aumenta o dano das magias</p>
+              <p>• <strong>Vitalidade</strong>: Regenera HP e Mana passivamente</p>
+              
+              <h3>🎽 Raridades de Itens</h3>
+              <p>• <span style={{ color: '#888' }}>Comum</span>: 1 atributo (1x nível do inimigo)</p>
+              <p>• <span style={{ color: '#4169E1' }}>Mágico</span>: 2 atributos (1.3x nível do inimigo)</p>
+              <p>• <span style={{ color: '#FFD700' }}>Raro</span>: 3 atributos (1.7x nível do inimigo)</p>
+              <p>• <span style={{ color: '#9370DB' }}>Épico</span>: 4 atributos (2.2x nível do inimigo)</p>
+              <p>• <span style={{ color: '#FF8C00' }}>Lendário</span>: Todos atributos + efeito especial (3x nível do inimigo)</p>
+              
+              <h3>✨ Efeitos Lendários</h3>
+              <p>• <strong>Vampirismo</strong>: Recupera HP baseado no dano causado</p>
+              <p>• <strong>Regeneração</strong>: Regenera % do HP máximo por segundo</p>
+              <p>• <strong>Espinhos</strong>: Reflete % do dano recebido</p>
+              <p>• <strong>Velocidade</strong>: Reduz tempo de ataque dos inimigos</p>
+              <p>• <strong>Crítico</strong>: Aumenta dano dos ataques críticos</p>
+              <p>• <strong>Resistência</strong>: Reduz dano recebido</p>
+              
+              <h3>🌽 Sabugos (Moeda)</h3>
+              <p>• Inimigos normais dropam sabugos = ao seu nível</p>
+              <p>• Bosses dropam 3x o nível em sabugos</p>
+              <p>• Descarte itens por sabugos (valor = nível do item x multiplicador de raridade)</p>
+              <p>• Use na Loja do Tio Bento para comprar poções e itens</p>
+              
+              <h3>🛒 Loja do Tio Bento</h3>
+              <p>• Poção de Vida (25🌽): Restaura 50% HP</p>
+              <p>• Poção de Mana (25🌽): Restaura 50% Mana</p>
+              <p>• Poção XP x2 (150🌽): Dobra XP por 10 lutas</p>
+              <p>• Poção XP x5 (500🌽): Quintuplica XP por 10 lutas</p>
+              <p>• Itens Aleatórios (100🌽): Escolha o tipo (arma, capacete, etc), raridade e atributos aleatórios baseados no nível da masmorra atual</p>
+              
+              <h3>🏯 Masmorras</h3>
+              <p>• Derrote o BOSS FINAL de cada masmorra para desbloquear a próxima</p>
+              <p>• Inimigos ficam mais fortes conforme você progride</p>
+              <p>• Itens dropados são baseados no nível do inimigo</p>
+              
+              <h3>⌨️ Atalhos</h3>
+              <p>• [B] - Buscar Inimigo | [I] - Inventário | [M] - Magias</p>
+              <p>• [H] - Ajuda | [S] - Salvar | [Q/W/E/R] - Magias</p>
+              <p>• [←/→] - Atacar | [1/2/3/4] - Distribuir pontos ao upar</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showSpellbook && (
         <div className="modal-overlay" onClick={() => setShowSpellbook(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -1113,6 +1189,7 @@ const App = () => {
                   <div className="spell-info">
                     <strong>{spell.icon} {spell.name}</strong>
                     <small>Custo: {spell.cost} mana | Nível {spell.unlockLevel}</small>
+                    <div style={{ fontSize: '0.85em', opacity: 0.8, marginTop: '5px', fontStyle: 'italic' }}>{spell.desc}</div>
                   </div>
                   <div className="spell-equip-btns">
                     {[0, 1, 2, 3].map(slot => (
@@ -1168,7 +1245,7 @@ const App = () => {
                 {lootedItem.effect && <span style={{ color: '#FFD700', fontWeight: 'bold' }}>✨ {lootedItem.effect.charAt(0).toUpperCase() + lootedItem.effect.slice(1)}: {lootedItem.effectValue}%</span>}
               </div>
             </div>
-            <button className="btn-primary" onClick={() => setLootedItem(null)}>Continuar</button>
+            <button className="btn-primary" onClick={() => setLootedItem(null)}>Continuar [Espaço]</button>
           </div>
         </div>
       )}
@@ -1251,8 +1328,9 @@ const App = () => {
               {inventory.length > 0 ? (
                 <div className="inventory-items">
                   {inventory.map(item => {
-                    const rarityValues = { 'Comum': 1, 'Mágico': 3, 'Raro': 8, 'Épico': 20, 'Lendário': 50 };
-                    const discardValue = rarityValues[item.rarity] || 1;
+                    const rarityMultipliers = { 'Comum': 0.5, 'Mágico': 1, 'Raro': 2, 'Épico': 4, 'Lendário': 8 };
+                    const itemLevel = item.itemLevel || 1;
+                    const discardValue = Math.max(1, Math.floor(itemLevel * rarityMultipliers[item.rarity]));
                     return (
                     <div key={item.id} className={`item ${item.rarity.toLowerCase()}`}>
                       <div style={{ flex: 1 }}>
@@ -1277,6 +1355,25 @@ const App = () => {
                 <p style={{ opacity: 0.5, textAlign: 'center', padding: '20px' }}>Nenhum item no inventário</p>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {lootedItem && (
+        <div className="modal-overlay" onClick={() => setLootedItem(null)} style={{ zIndex: 1001 }}>
+          <div className="loot-modal" onClick={(e) => e.stopPropagation()}>
+            <h2>🎉 Item Obtido!</h2>
+            <div className={`loot-item ${lootedItem.rarity.toLowerCase()}`}>
+              <h3>{lootedItem.name}</h3>
+              <div className="loot-stats">
+                {lootedItem.strength > 0 && <span>💪 Força: +{lootedItem.strength}</span>}
+                {lootedItem.agility > 0 && <span>⚡ Agilidade: +{lootedItem.agility}</span>}
+                {lootedItem.intelligence > 0 && <span>🧠 Inteligência: +{lootedItem.intelligence}</span>}
+                {lootedItem.hp > 0 && <span>❤️ HP: +{lootedItem.hp}</span>}
+                {lootedItem.effect && <span style={{ color: '#FFD700', fontWeight: 'bold' }}>✨ {lootedItem.effect.charAt(0).toUpperCase() + lootedItem.effect.slice(1)}: {lootedItem.effectValue}%</span>}
+              </div>
+            </div>
+            <button className="btn-primary" onClick={() => setLootedItem(null)}>Continuar [Espaço]</button>
           </div>
         </div>
       )}
@@ -1410,7 +1507,7 @@ const App = () => {
                     </div>
                     <button 
                       onClick={() => {
-                        const cost = 10;
+                        const cost = 25;
                         if (player.sabugos >= cost) {
                           const bonus = getTotalStats();
                           const healAmount = Math.floor((player.maxHp + bonus.maxHp) * 0.5);
@@ -1425,21 +1522,21 @@ const App = () => {
                         }
                       }}
                       style={{
-                        background: player.sabugos >= 10 ? 'linear-gradient(135deg, #FFD700, #FFA500)' : 'linear-gradient(135deg, #555, #333)',
-                        border: '2px solid ' + (player.sabugos >= 10 ? '#FFD700' : '#666'),
-                        color: player.sabugos >= 10 ? '#000' : '#999',
+                        background: player.sabugos >= 25 ? 'linear-gradient(135deg, #FFD700, #FFA500)' : 'linear-gradient(135deg, #555, #333)',
+                        border: '2px solid ' + (player.sabugos >= 25 ? '#FFD700' : '#666'),
+                        color: player.sabugos >= 25 ? '#000' : '#999',
                         padding: '12px 25px',
                         borderRadius: '10px',
-                        cursor: player.sabugos >= 10 ? 'pointer' : 'not-allowed',
+                        cursor: player.sabugos >= 25 ? 'pointer' : 'not-allowed',
                         fontSize: '1.1em',
                         fontWeight: 'bold',
                         minWidth: '120px',
                         transition: 'all 0.2s'
                       }}
-                      onMouseEnter={(e) => { if (player.sabugos >= 10) e.currentTarget.style.transform = 'scale(1.1)'; }}
+                      onMouseEnter={(e) => { if (player.sabugos >= 25) e.currentTarget.style.transform = 'scale(1.1)'; }}
                       onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                     >
-                      🌽 10
+                      🌽 25
                     </button>
                   </div>
 
@@ -1467,7 +1564,7 @@ const App = () => {
                     </div>
                     <button 
                       onClick={() => {
-                        const cost = 10;
+                        const cost = 25;
                         if (player.sabugos >= cost) {
                           const healAmount = Math.floor(maxMana * 0.5);
                           setMana(prev => Math.min(prev + healAmount, maxMana));
@@ -1478,21 +1575,21 @@ const App = () => {
                         }
                       }}
                       style={{
-                        background: player.sabugos >= 10 ? 'linear-gradient(135deg, #FFD700, #FFA500)' : 'linear-gradient(135deg, #555, #333)',
-                        border: '2px solid ' + (player.sabugos >= 10 ? '#FFD700' : '#666'),
-                        color: player.sabugos >= 10 ? '#000' : '#999',
+                        background: player.sabugos >= 25 ? 'linear-gradient(135deg, #FFD700, #FFA500)' : 'linear-gradient(135deg, #555, #333)',
+                        border: '2px solid ' + (player.sabugos >= 25 ? '#FFD700' : '#666'),
+                        color: player.sabugos >= 25 ? '#000' : '#999',
                         padding: '12px 25px',
                         borderRadius: '10px',
-                        cursor: player.sabugos >= 10 ? 'pointer' : 'not-allowed',
+                        cursor: player.sabugos >= 25 ? 'pointer' : 'not-allowed',
                         fontSize: '1.1em',
                         fontWeight: 'bold',
                         minWidth: '120px',
                         transition: 'all 0.2s'
                       }}
-                      onMouseEnter={(e) => { if (player.sabugos >= 10) e.currentTarget.style.transform = 'scale(1.1)'; }}
+                      onMouseEnter={(e) => { if (player.sabugos >= 25) e.currentTarget.style.transform = 'scale(1.1)'; }}
                       onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                     >
-                      🌽 10
+                      🌽 25
                     </button>
                   </div>
 
@@ -1520,7 +1617,7 @@ const App = () => {
                     </div>
                     <button 
                       onClick={() => {
-                        const cost = 50;
+                        const cost = 150;
                         if (player.sabugos >= cost) {
                           setPlayer(prev => ({ ...prev, sabugos: prev.sabugos - cost, xpBoost: 2, xpBoostRounds: 10 }));
                           addLog(`⭐ Comprou Poção de XP x2! Próximas 10 lutas`);
@@ -1529,21 +1626,21 @@ const App = () => {
                         }
                       }}
                       style={{
-                        background: player.sabugos >= 50 ? 'linear-gradient(135deg, #FFD700, #FFA500)' : 'linear-gradient(135deg, #555, #333)',
-                        border: '2px solid ' + (player.sabugos >= 50 ? '#FFD700' : '#666'),
-                        color: player.sabugos >= 50 ? '#000' : '#999',
+                        background: player.sabugos >= 150 ? 'linear-gradient(135deg, #FFD700, #FFA500)' : 'linear-gradient(135deg, #555, #333)',
+                        border: '2px solid ' + (player.sabugos >= 150 ? '#FFD700' : '#666'),
+                        color: player.sabugos >= 150 ? '#000' : '#999',
                         padding: '12px 25px',
                         borderRadius: '10px',
-                        cursor: player.sabugos >= 50 ? 'pointer' : 'not-allowed',
+                        cursor: player.sabugos >= 150 ? 'pointer' : 'not-allowed',
                         fontSize: '1.1em',
                         fontWeight: 'bold',
                         minWidth: '120px',
                         transition: 'all 0.2s'
                       }}
-                      onMouseEnter={(e) => { if (player.sabugos >= 50) e.currentTarget.style.transform = 'scale(1.1)'; }}
+                      onMouseEnter={(e) => { if (player.sabugos >= 150) e.currentTarget.style.transform = 'scale(1.1)'; }}
                       onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                     >
-                      🌽 50
+                      🌽 150
                     </button>
                   </div>
 
@@ -1571,7 +1668,7 @@ const App = () => {
                     </div>
                     <button 
                       onClick={() => {
-                        const cost = 150;
+                        const cost = 500;
                         if (player.sabugos >= cost) {
                           setPlayer(prev => ({ ...prev, sabugos: prev.sabugos - cost, xpBoost: 5, xpBoostRounds: 10 }));
                           addLog(`🌟 Comprou Poção de XP x5! Próximas 10 lutas`);
@@ -1580,23 +1677,92 @@ const App = () => {
                         }
                       }}
                       style={{
-                        background: player.sabugos >= 150 ? 'linear-gradient(135deg, #FFD700, #FFA500)' : 'linear-gradient(135deg, #555, #333)',
-                        border: '2px solid ' + (player.sabugos >= 150 ? '#FFD700' : '#666'),
-                        color: player.sabugos >= 150 ? '#000' : '#999',
+                        background: player.sabugos >= 500 ? 'linear-gradient(135deg, #FFD700, #FFA500)' : 'linear-gradient(135deg, #555, #333)',
+                        border: '2px solid ' + (player.sabugos >= 500 ? '#FFD700' : '#666'),
+                        color: player.sabugos >= 500 ? '#000' : '#999',
                         padding: '12px 25px',
                         borderRadius: '10px',
-                        cursor: player.sabugos >= 150 ? 'pointer' : 'not-allowed',
+                        cursor: player.sabugos >= 500 ? 'pointer' : 'not-allowed',
                         fontSize: '1.1em',
                         fontWeight: 'bold',
                         minWidth: '120px',
                         transition: 'all 0.2s'
                       }}
-                      onMouseEnter={(e) => { if (player.sabugos >= 150) e.currentTarget.style.transform = 'scale(1.1)'; }}
+                      onMouseEnter={(e) => { if (player.sabugos >= 500) e.currentTarget.style.transform = 'scale(1.1)'; }}
                       onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                     >
-                      🌽 150
+                      🌽 500
                     </button>
                   </div>
+
+                  <h4 style={{ margin: '20px 0 15px 0', fontSize: '1.2em', borderBottom: '2px solid rgba(255,255,255,0.2)', paddingBottom: '10px' }}>🎁 Itens Aleatórios</h4>
+
+                  {[
+                    { type: 'weapon', icon: '⚔️', name: 'Arma' },
+                    { type: 'helmet', icon: '🧢', name: 'Capacete' },
+                    { type: 'chest', icon: '🛡️', name: 'Peitoral' },
+                    { type: 'legs', icon: '🧤', name: 'Perneira' },
+                    { type: 'boots', icon: '🥾', name: 'Botas' },
+                    { type: 'accessory', icon: '💍', name: 'Acessório' }
+                  ].map(itemType => {
+                    const dungeon = getCurrentDungeonInfo();
+                    const itemCost = dungeon.minLevel * 10;
+                    return (
+                      <div key={itemType.type} style={{ 
+                        background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.2))',
+                        padding: '15px',
+                        borderRadius: '12px',
+                        border: '2px solid rgba(255, 215, 0, 0.5)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        transition: 'all 0.3s',
+                        cursor: 'pointer',
+                        marginBottom: '15px'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+                      onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                      >
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: '1.5em', marginBottom: '5px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <span>{itemType.icon}</span>
+                            <span>{itemType.name}</span>
+                          </div>
+                          <div style={{ opacity: 0.8, fontSize: '0.9em' }}>Nível baseado na masmorra atual</div>
+                        </div>
+                        <button 
+                          onClick={() => {
+                            if (player.sabugos >= itemCost) {
+                              const itemLevel = Math.floor(Math.random() * (dungeon.maxLevel - dungeon.minLevel + 1)) + dungeon.minLevel;
+                              const item = generateItem(itemLevel, itemType.type);
+                              setInventory(prev => [...prev, item]);
+                              setPlayer(prev => ({ ...prev, sabugos: prev.sabugos - itemCost }));
+                              setLootedItem(item);
+                              addLog(`🎁 Comprou ${item.name}!`);
+                            } else {
+                              addLog('🚫 Sabugos insuficientes!');
+                            }
+                          }}
+                          style={{
+                            background: player.sabugos >= itemCost ? 'linear-gradient(135deg, #FFD700, #FFA500)' : 'linear-gradient(135deg, #555, #333)',
+                            border: '2px solid ' + (player.sabugos >= itemCost ? '#FFD700' : '#666'),
+                            color: player.sabugos >= itemCost ? '#000' : '#999',
+                            padding: '12px 25px',
+                            borderRadius: '10px',
+                            cursor: player.sabugos >= itemCost ? 'pointer' : 'not-allowed',
+                            fontSize: '1.1em',
+                            fontWeight: 'bold',
+                            minWidth: '120px',
+                            transition: 'all 0.2s'
+                          }}
+                          onMouseEnter={(e) => { if (player.sabugos >= itemCost) e.currentTarget.style.transform = 'scale(1.1)'; }}
+                          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                        >
+                          🌽 {itemCost}
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
                 </div>
               </div>
@@ -1617,7 +1783,7 @@ const App = () => {
           </div>
           <div className="xp-bar">
             <div className="xp-fill" style={{ width: `${(player.xp / player.xpToNext) * 100}%` }}></div>
-            <span>{player.xp} / {player.xpToNext} XP</span>
+            <span style={{ whiteSpace: 'nowrap' }}>{player.xp} / {player.xpToNext} XP {player.xpBoostRounds > 0 && `⭐x${player.xpBoost} (${player.xpBoostRounds})`}</span>
           </div>
           <div className="hp-bar" style={{ marginTop: '10px' }}>
             <div className="xp-fill" style={{ width: `${(mana / maxMana) * 100}%`, background: 'linear-gradient(90deg, #4444ff, #6666ff)' }}></div>
@@ -1640,6 +1806,10 @@ const App = () => {
 
           <button className="btn-sidebar" onClick={() => setShowSpellbook(true)}>
             📚 Magias [M]
+          </button>
+
+          <button className="btn-sidebar" onClick={() => setShowHelp(true)}>
+            ❓ Ajuda [H]
           </button>
 
           <button className="btn-sidebar" onClick={saveGame}>
@@ -1676,7 +1846,7 @@ const App = () => {
               </button>
               {(player.bossCounter + 1) % 10 === 0 && (
                 <button onClick={escapeBoss} className="btn-primary" style={{ background: 'linear-gradient(135deg, #f44336, #d32f2f)' }}>
-                  🏃 ESCAPAR
+                  🏃 ESCAPAR [E]
                 </button>
               )}
             </div>
