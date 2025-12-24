@@ -71,6 +71,7 @@ const App = () => {
   const [screenEffect, setScreenEffect] = useState(null);
   const [floatingText, setFloatingText] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [nextAttackKey, setNextAttackKey] = useState('ArrowLeft');
   const enemyTimerRef = useRef(null);
   const timerIntervalRef = useRef(null);
   const playerRef = useRef(player);
@@ -461,6 +462,8 @@ const App = () => {
       triggerScreenEffect('attack');
     }
 
+    setNextAttackKey(nextAttackKey === 'ArrowLeft' ? 'ArrowRight' : 'ArrowLeft');
+
     if (newHp <= 0) {
       setTimeout(() => defeatEnemy(), 300);
     }
@@ -710,8 +713,7 @@ const App = () => {
 
   useEffect(() => {
     const handleKeyPress = (e) => {
-      if (e.key === ' ' || e.key === 'Spacebar') {
-        e.preventDefault();
+      if (e.key === nextAttackKey) {
         if (levelUpPoints === 0 && combat && enemy?.hp > 0) {
           playerAttack();
         }
@@ -744,7 +746,7 @@ const App = () => {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [combat, levelUpPoints, enemy, mana, equippedSpells]);
+  }, [combat, levelUpPoints, enemy, mana, equippedSpells, nextAttackKey]);
 
   useEffect(() => {
     if (combat && enemy) {
@@ -1168,7 +1170,7 @@ const App = () => {
             </div>
           ) : levelUpPoints === 0 ? (
             <button onClick={playerAttack} className="btn-attack" disabled={enemy?.hp <= 0}>
-              Sabugar [ESPAÇO]
+              Sabugar [{nextAttackKey === 'ArrowLeft' ? '←' : '→'}]
             </button>
           ) : null}
         </div>
