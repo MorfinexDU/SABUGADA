@@ -1,0 +1,1107 @@
+import React, { useState, useEffect, useRef } from 'react';
+import './App.css';
+
+const App = () => {
+  const [gameStarted, setGameStarted] = useState(false);
+  const [characterName, setCharacterName] = useState('');
+  const [characterIcon, setCharacterIcon] = useState('🧙');
+  const [showCharacterCreation, setShowCharacterCreation] = useState(true);
+  const [showLoadScreen, setShowLoadScreen] = useState(false);
+  const [currentSaveSlot, setCurrentSaveSlot] = useState(null);
+  
+  const [player, setPlayer] = useState({
+    level: 1,
+    xp: 0,
+    xpToNext: 100,
+    hp: 100,
+    maxHp: 100,
+    strength: 10,
+    agility: 10,
+    intelligence: 10,
+    vitality: 10,
+    kills: 0,
+    bossCounter: 0
+  });
+
+  const [enemy, setEnemy] = useState(null);
+  const [combat, setCombat] = useState(false);
+  const [log, setLog] = useState([]);
+  const [attackTimer, setAttackTimer] = useState(0);
+  const [levelUpPoints, setLevelUpPoints] = useState(0);
+  const [equipment, setEquipment] = useState({ 
+    weapon: null, 
+    helmet: null, 
+    chest: null, 
+    legs: null, 
+    boots: null, 
+    accessory: null 
+  });
+  const [inventory, setInventory] = useState([]);
+  const [showInventory, setShowInventory] = useState(false);
+  const [lootedItem, setLootedItem] = useState(null);
+  const [mana, setMana] = useState(100);
+  const [maxMana, setMaxMana] = useState(100);
+  const [equippedSpells, setEquippedSpells] = useState(['fireball', 'slow', 'stun', 'shock']);
+  const [showSpellbook, setShowSpellbook] = useState(false);
+  const [allSpells] = useState([
+    { id: 'fireball', name: 'Bola de Fogo', cost: 20, damage: 30, type: 'damage', icon: '🔥', unlockLevel: 1 },
+    { id: 'slow', name: 'Lentidão', cost: 15, duration: 5000, type: 'slow', icon: '❄️', unlockLevel: 1 },
+    { id: 'stun', name: 'Paralisia', cost: 30, duration: 3000, type: 'stun', icon: '⚡', unlockLevel: 1 },
+    { id: 'shock', name: 'Eletrificar', cost: 25, duration: 8000, type: 'shock', icon: '⚡', unlockLevel: 1 },
+    { id: 'meteor', name: 'Meteoro', cost: 40, damage: 80, type: 'damage', icon: '☄️', unlockLevel: 10 },
+    { id: 'heal', name: 'Cura', cost: 30, heal: 50, type: 'heal', icon: '❤️', unlockLevel: 10 },
+    { id: 'freeze', name: 'Congelar', cost: 35, duration: 5000, dps: 8, type: 'freeze', icon: '❄️', unlockLevel: 20 },
+    { id: 'poison', name: 'Veneno', cost: 20, duration: 10000, dps: 5, type: 'poison', icon: '🧪', unlockLevel: 20 },
+    { id: 'lightning', name: 'Relâmpago', cost: 50, damage: 120, type: 'damage', icon: '⚡', unlockLevel: 30 },
+    { id: 'shield', name: 'Escudo', cost: 40, duration: 10000, type: 'shield', icon: '🛡️', unlockLevel: 30 },
+    { id: 'drain', name: 'Drenar Vida', cost: 35, damage: 40, heal: 40, type: 'drain', icon: '🧛', unlockLevel: 40 },
+    { id: 'haste', name: 'Acelerar', cost: 25, duration: 8000, type: 'haste', icon: '💨', unlockLevel: 40 },
+    { id: 'inferno', name: 'Inferno', cost: 60, damage: 150, type: 'damage', icon: '🔥', unlockLevel: 50 },
+    { id: 'reflect', name: 'Refletir', cost: 45, duration: 12000, type: 'reflect', icon: '🔮', unlockLevel: 50 },
+    { id: 'timewarp', name: 'Distorcer Tempo', cost: 50, duration: 6000, type: 'timewarp', icon: '⏳', unlockLevel: 60 },
+    { id: 'nova', name: 'Nova Arcana', cost: 70, damage: 200, type: 'damage', icon: '✨', unlockLevel: 60 },
+    { id: 'invulnerable', name: 'Invulnerável', cost: 80, duration: 5000, type: 'invulnerable', icon: '👼', unlockLevel: 70 },
+    { id: 'apocalypse', name: 'Apocalipse', cost: 100, damage: 300, type: 'damage', icon: '🔪', unlockLevel: 70 }
+  ]);
+  const [enemyEffects, setEnemyEffects] = useState({ slow: false, stun: false, shock: false, poison: false });
+  const [playerEffects, setPlayerEffects] = useState({ shield: false, haste: false, reflect: false, invulnerable: false });
+  const [screenEffect, setScreenEffect] = useState(null);
+  const [floatingText, setFloatingText] = useState(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const enemyTimerRef = useRef(null);
+  const timerIntervalRef = useRef(null);
+  const playerRef = useRef(player);
+  const enemyRef = useRef(enemy);
+  const manaRegenRef = useRef(null);
+
+  useEffect(() => {
+    const saves = [];
+    for (let i = 1; i <= 3; i++) {
+      if (localStorage.getItem(`rpgSave${i}`)) saves.push(i);
+    }
+    if (saves.length > 0 && !showLoadScreen) {
+      setShowLoadScreen(true);
+      setShowCharacterCreation(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    playerRef.current = player;
+  }, [player]);
+
+  useEffect(() => {
+    enemyRef.current = enemy;
+  }, [enemy]);
+
+  useEffect(() => {
+    manaRegenRef.current = setInterval(() => {
+      setMana(prev => Math.min(prev + 2 + Math.floor(player.vitality / 5), maxMana));
+    }, 1000);
+    return () => clearInterval(manaRegenRef.current);
+  }, [maxMana, player.vitality]);
+
+  useEffect(() => {
+    const hpRegenInterval = setInterval(() => {
+      setPlayer(prev => {
+        if (prev.hp < prev.maxHp + getTotalStats().maxHp && !combat) {
+          return { ...prev, hp: Math.min(prev.hp + Math.floor(prev.vitality / 3), prev.maxHp + getTotalStats().maxHp) };
+        }
+        return prev;
+      });
+    }, 2000);
+    return () => clearInterval(hpRegenInterval);
+  }, [combat, player.vitality]);
+
+  const generateItem = (enemyLevel) => {
+    const types = ['weapon', 'helmet', 'chest', 'legs', 'boots', 'accessory'];
+    const type = types[Math.floor(Math.random() * types.length)];
+    const rarity = Math.random();
+    
+    let rarityName, multiplier;
+    if (rarity < 0.50) { rarityName = 'Comum'; multiplier = 1; }
+    else if (rarity < 0.75) { rarityName = 'Mágico'; multiplier = 1.3; }
+    else if (rarity < 0.90) { rarityName = 'Raro'; multiplier = 1.7; }
+    else if (rarity < 0.97) { rarityName = 'Épico'; multiplier = 2.2; }
+    else { rarityName = 'Lendário'; multiplier = 3; }
+    
+    const baseStats = Math.floor(enemyLevel * multiplier);
+    
+    const typeNames = {
+      weapon: 'Arma',
+      helmet: 'Capacete',
+      chest: 'Peitoral',
+      legs: 'Perneira',
+      boots: 'Botas',
+      accessory: 'Acessório'
+    };
+    
+    const item = {
+      id: Date.now() + Math.random(),
+      type,
+      name: `${rarityName} ${typeNames[type]}`,
+      rarity: rarityName,
+      strength: type === 'weapon' ? baseStats + Math.floor(Math.random() * 5) : Math.floor(baseStats / 2),
+      agility: type === 'accessory' || type === 'boots' ? baseStats + Math.floor(Math.random() * 5) : Math.floor(baseStats / 2),
+      intelligence: Math.floor(baseStats / 3),
+      hp: ['helmet', 'chest', 'legs'].includes(type) ? baseStats * 10 : 0
+    };
+
+    if (rarityName === 'Lendário') {
+      const effects = ['vampirismo', 'regeneração', 'espinhos', 'velocidade'];
+      item.effect = effects[Math.floor(Math.random() * effects.length)];
+    }
+
+    return item;
+  };
+
+  const getTotalStats = () => {
+    let bonus = { strength: 0, agility: 0, intelligence: 0, maxHp: 0 };
+    Object.values(equipment).forEach(item => {
+      if (item) {
+        bonus.strength += item.strength;
+        bonus.agility += item.agility;
+        bonus.intelligence += item.intelligence;
+        bonus.maxHp += item.hp;
+      }
+    });
+    return bonus;
+  };
+
+  const equipItem = (item) => {
+    const current = equipment[item.type];
+    if (current) {
+      setInventory(prev => [...prev, current]);
+    }
+    setEquipment(prev => ({ ...prev, [item.type]: item }));
+    setInventory(prev => prev.filter(i => i.id !== item.id));
+    addLog(`${item.name} equipado!`);
+  };
+
+  const unequipItem = (type) => {
+    const item = equipment[type];
+    if (item) {
+      setInventory(prev => [...prev, item]);
+      setEquipment(prev => ({ ...prev, [type]: null }));
+      addLog(`${item.name} desequipado!`);
+    }
+  };
+
+  const discardItem = (itemId) => {
+    setInventory(prev => prev.filter(i => i.id !== itemId));
+    addLog('Item descartado!');
+  };
+
+  const getEquippedSpells = () => {
+    return equippedSpells.map((id, index) => {
+      const spell = allSpells.find(s => s.id === id);
+      return spell ? { ...spell, key: ['Q', 'W', 'E', 'R'][index] } : null;
+    }).filter(Boolean);
+  };
+
+  const equipSpell = (spellId, slot) => {
+    const newEquipped = [...equippedSpells];
+    const existingIndex = newEquipped.indexOf(spellId);
+    
+    if (existingIndex !== -1 && existingIndex !== slot) {
+      newEquipped[existingIndex] = null;
+    }
+    
+    newEquipped[slot] = spellId;
+    setEquippedSpells(newEquipped);
+  };
+
+  const castSpell = (spell) => {
+    if (!enemy || enemy.hp <= 0 || mana < spell.cost) return;
+    
+    setMana(prev => prev - spell.cost);
+    
+    if (spell.type === 'damage') {
+      const dmg = spell.damage + Math.floor(player.intelligence * 2);
+      setEnemy(prev => ({ ...prev, hp: Math.max(0, prev.hp - dmg) }));
+      addLog(`${spell.icon} ${spell.name}! ${dmg} de dano!`);
+      showFloatingText(`${spell.icon} ${dmg}`, 'spell');
+      triggerScreenEffect('fire');
+      if (enemy.hp - dmg <= 0) {
+        setTimeout(() => defeatEnemy(), 300);
+      }
+    } else if (spell.type === 'heal') {
+      const healAmount = spell.heal + Math.floor(player.intelligence);
+      setPlayer(prev => ({ ...prev, hp: Math.min(prev.hp + healAmount, prev.maxHp + getTotalStats().maxHp) }));
+      addLog(`${spell.icon} Curado ${healAmount} HP!`);
+      triggerScreenEffect('heal');
+    } else if (spell.type === 'drain') {
+      const dmg = spell.damage + Math.floor(player.intelligence * 2);
+      setEnemy(prev => ({ ...prev, hp: Math.max(0, prev.hp - dmg) }));
+      setPlayer(prev => ({ ...prev, hp: Math.min(prev.hp + spell.heal, prev.maxHp + getTotalStats().maxHp) }));
+      addLog(`${spell.icon} ${dmg} dano e +${spell.heal} HP!`);
+      showFloatingText(`${spell.icon} ${dmg}`, 'drain');
+      triggerScreenEffect('drain');
+    } else if (spell.type === 'slow') {
+      setEnemyEffects(prev => ({ ...prev, slow: true }));
+      addLog(`${spell.icon} ${spell.name} aplicado!`);
+      showFloatingText(`${spell.icon}`, 'effect');
+      triggerScreenEffect('ice');
+      setTimeout(() => setEnemyEffects(prev => ({ ...prev, slow: false })), spell.duration);
+    } else if (spell.type === 'stun') {
+      setEnemyEffects(prev => ({ ...prev, stun: true }));
+      addLog(`${spell.icon} Inimigo paralisado!`);
+      showFloatingText(`${spell.icon}`, 'effect');
+      triggerScreenEffect('lightning');
+      setTimeout(() => setEnemyEffects(prev => ({ ...prev, stun: false })), spell.duration);
+    } else if (spell.type === 'freeze') {
+      setEnemyEffects(prev => ({ ...prev, stun: true }));
+      addLog(`${spell.icon} Inimigo congelado!`);
+      showFloatingText(`${spell.icon}`, 'effect');
+      triggerScreenEffect('ice');
+      const freezeInterval = setInterval(() => {
+        setEnemy(prev => prev ? ({ ...prev, hp: Math.max(0, prev.hp - spell.dps) }) : null);
+      }, 1000);
+      setTimeout(() => {
+        clearInterval(freezeInterval);
+        setEnemyEffects(prev => ({ ...prev, stun: false }));
+      }, spell.duration);
+    } else if (spell.type === 'shock') {
+      setEnemyEffects(prev => ({ ...prev, shock: true }));
+      addLog(`${spell.icon} Inimigo eletrificado! +50% dano`);
+      showFloatingText(`${spell.icon}`, 'effect');
+      triggerScreenEffect('shock');
+      setTimeout(() => setEnemyEffects(prev => ({ ...prev, shock: false })), spell.duration);
+    } else if (spell.type === 'poison') {
+      setEnemyEffects(prev => ({ ...prev, poison: true }));
+      addLog(`${spell.icon} Veneno aplicado!`);
+      showFloatingText(`${spell.icon}`, 'effect');
+      triggerScreenEffect('poison');
+      const poisonInterval = setInterval(() => {
+        setEnemy(prev => prev ? ({ ...prev, hp: Math.max(0, prev.hp - spell.dps) }) : null);
+      }, 1000);
+      setTimeout(() => {
+        clearInterval(poisonInterval);
+        setEnemyEffects(prev => ({ ...prev, poison: false }));
+      }, spell.duration);
+    } else if (spell.type === 'shield') {
+      setPlayerEffects(prev => ({ ...prev, shield: true }));
+      addLog(`${spell.icon} Escudo ativado!`);
+      triggerScreenEffect('shield');
+      setTimeout(() => setPlayerEffects(prev => ({ ...prev, shield: false })), spell.duration);
+    } else if (spell.type === 'haste') {
+      setPlayerEffects(prev => ({ ...prev, haste: true }));
+      addLog(`${spell.icon} Velocidade aumentada!`);
+      triggerScreenEffect('haste');
+      setTimeout(() => setPlayerEffects(prev => ({ ...prev, haste: false })), spell.duration);
+    } else if (spell.type === 'reflect') {
+      setPlayerEffects(prev => ({ ...prev, reflect: true }));
+      addLog(`${spell.icon} Reflexão ativada!`);
+      triggerScreenEffect('reflect');
+      setTimeout(() => setPlayerEffects(prev => ({ ...prev, reflect: false })), spell.duration);
+    } else if (spell.type === 'invulnerable') {
+      setPlayerEffects(prev => ({ ...prev, invulnerable: true }));
+      addLog(`${spell.icon} Invulnerabilidade!`);
+      triggerScreenEffect('invulnerable');
+      setTimeout(() => setPlayerEffects(prev => ({ ...prev, invulnerable: false })), spell.duration);
+    } else if (spell.type === 'timewarp') {
+      setEnemyEffects(prev => ({ ...prev, slow: true, stun: true }));
+      addLog(`${spell.icon} Tempo distorcido!`);
+      triggerScreenEffect('timewarp');
+      setTimeout(() => setEnemyEffects(prev => ({ ...prev, slow: false, stun: false })), spell.duration);
+    }
+  };
+
+  const triggerScreenEffect = (type) => {
+    setScreenEffect(type);
+    setTimeout(() => setScreenEffect(null), 500);
+  };
+
+  const showFloatingText = (text, type) => {
+    setFloatingText({ text, type });
+    setTimeout(() => setFloatingText(null), 1000);
+  };
+
+  const generateEnemy = () => {
+    const isBoss = (player.bossCounter + 1) % 10 === 0;
+    const difficulty = Math.floor(player.level / 2) + Math.floor(Math.random() * player.level);
+    const speed = 800 + Math.random() * 1500;
+    const isFast = speed < 1400;
+    
+    if (isBoss) {
+      return {
+        name: `👑 BOSS Nv.${difficulty}`,
+        level: difficulty,
+        hp: (80 + difficulty * 35) * 3,
+        maxHp: (80 + difficulty * 35) * 3,
+        strength: (8 + difficulty * 4) * 1.5,
+        agility: (5 + difficulty * 2) * 1.5,
+        intelligence: (5 + difficulty * 2) * 1.5,
+        attackSpeed: speed * 0.8,
+        xpReward: (15 + difficulty * 8) * 3,
+        isFast,
+        isBoss: true
+      };
+    }
+    
+    return {
+      name: `Inimigo Nv.${difficulty}`,
+      level: difficulty,
+      hp: 80 + difficulty * 35,
+      maxHp: 80 + difficulty * 35,
+      strength: 8 + difficulty * 4,
+      agility: 5 + difficulty * 2,
+      intelligence: 5 + difficulty * 2,
+      attackSpeed: speed,
+      xpReward: 15 + difficulty * 8,
+      isFast,
+      isBoss: false
+    };
+  };
+
+  const addLog = (msg) => {
+    setLog(prev => [msg, ...prev.slice(0, 4)]);
+  };
+
+  const calculateDamage = (attacker, defender) => {
+    const bonus = attacker === playerRef.current ? getTotalStats() : { strength: 0, agility: 0 };
+    const baseDmg = attacker.strength + bonus.strength;
+    const critChance = (attacker.agility + bonus.agility) / 200;
+    const isCrit = Math.random() < critChance;
+    let dmg = Math.floor(baseDmg * (isCrit ? 2 : 1) * (0.8 + Math.random() * 0.4));
+    
+    if (attacker === playerRef.current && enemyEffects.shock) {
+      dmg = Math.floor(dmg * 1.5);
+    }
+    
+    return { dmg, isCrit };
+  };
+
+  const playerAttack = () => {
+    if (!enemyRef.current || enemyRef.current.hp <= 0) return;
+
+    const { dmg, isCrit } = calculateDamage(playerRef.current, enemyRef.current);
+    const newHp = Math.max(0, enemyRef.current.hp - dmg);
+    
+    setEnemy(prev => ({ ...prev, hp: newHp }));
+    addLog(`Você ataca! ${dmg} de dano${isCrit ? ' CRÍTICO!' : ''}`);
+    
+    if (isCrit) {
+      showFloatingText(`⚔️ ${dmg} CRIT!`, 'crit');
+      triggerScreenEffect('crit');
+    } else {
+      showFloatingText(`⚔️ ${dmg}`, 'attack');
+      triggerScreenEffect('attack');
+    }
+
+    if (newHp <= 0) {
+      setTimeout(() => defeatEnemy(), 300);
+    }
+  };
+
+  const enemyAttack = () => {
+    const currentEnemy = enemyRef.current;
+    const currentPlayer = playerRef.current;
+    
+    if (!currentEnemy || currentEnemy.hp <= 0 || enemyEffects.stun) return;
+    if (playerEffects.invulnerable) {
+      addLog('👼 Ataque bloqueado por invulnerabilidade!');
+      return;
+    }
+
+    const { dmg, isCrit } = calculateDamage(currentEnemy, currentPlayer);
+    let finalDmg = dmg;
+    
+    if (playerEffects.shield) {
+      finalDmg = Math.floor(dmg * 0.5);
+      addLog(`🛡️ Escudo absorveu ${dmg - finalDmg} de dano!`);
+    }
+    
+    if (playerEffects.reflect) {
+      setEnemy(prev => ({ ...prev, hp: Math.max(0, prev.hp - Math.floor(dmg * 0.3)) }));
+      addLog(`🔮 Refletiu ${Math.floor(dmg * 0.3)} de dano!`);
+    }
+    
+    const newHp = Math.max(0, currentPlayer.hp - finalDmg);
+    
+    setPlayer(prev => ({ ...prev, hp: newHp }));
+    addLog(`${currentEnemy.name} ataca! ${finalDmg} de dano${isCrit ? ' CRÍTICO!' : ''}`);
+
+    if (newHp <= 0) {
+      setTimeout(gameOver, 0);
+    }
+  };
+
+  const defeatEnemy = () => {
+    const xpGained = enemy.xpReward;
+    const newXp = player.xp + xpGained;
+    const newKills = player.kills + 1;
+    const newBossCounter = player.bossCounter + 1;
+    
+    const baseDropChance = enemy.isBoss ? 0.8 : 0.08 + (enemy.level * 0.005);
+    const dropChance = Math.random();
+    
+    if (dropChance < baseDropChance) {
+      const item = generateItem(enemy.level);
+      setInventory(prev => [...prev, item]);
+      setLootedItem(item);
+      addLog(`${enemy.name} derrotado! +${xpGained} XP | ${item.name} obtido!`);
+    } else {
+      addLog(`${enemy.name} derrotado! +${xpGained} XP`);
+    }
+    
+    if (newXp >= player.xpToNext) {
+      levelUp(newXp, newKills, newBossCounter);
+    } else {
+      setPlayer(prev => ({ ...prev, xp: newXp, kills: newKills, bossCounter: newBossCounter }));
+    }
+    
+    setCombat(false);
+    setEnemy(null);
+    clearInterval(enemyTimerRef.current);
+  };
+
+  const levelUp = (currentXp, kills, bossCounter) => {
+    const newLevel = player.level + 1;
+    const overflow = currentXp - player.xpToNext;
+    const bonus = getTotalStats();
+    
+    setPlayer(prev => ({
+      ...prev,
+      level: newLevel,
+      xp: overflow,
+      xpToNext: Math.floor(prev.xpToNext * 1.8),
+      maxHp: prev.maxHp + 15 + bonus.maxHp,
+      hp: prev.maxHp + 15 + bonus.maxHp,
+      kills,
+      bossCounter
+    }));
+    
+    setLevelUpPoints(3);
+    setCombat(false);
+    setEnemy(null);
+    clearInterval(enemyTimerRef.current);
+    clearInterval(timerIntervalRef.current);
+    addLog(`LEVEL UP! Nível ${newLevel}! Distribua 3 pontos`);
+  };
+
+  const addStat = (stat) => {
+    if (levelUpPoints <= 0) return;
+    
+    setPlayer(prev => ({
+      ...prev,
+      [stat]: prev[stat] + 1
+    }));
+    
+    setLevelUpPoints(prev => prev - 1);
+  };
+
+  const gameOver = () => {
+    setCombat(false);
+    clearInterval(enemyTimerRef.current);
+    addLog('VOCÊ MORREU! Reiniciando...');
+    
+    setTimeout(() => {
+      setPlayer({
+        level: 1,
+        xp: 0,
+        xpToNext: 100,
+        hp: 100,
+        maxHp: 100,
+        strength: 10,
+        agility: 10,
+        intelligence: 10,
+        vitality: 10,
+        kills: 0,
+        bossCounter: 0
+      });
+      setEnemy(null);
+      setLog([]);
+    }, 2000);
+  };
+
+  const getPlayerColor = () => {
+    const level = player.level;
+    if (level < 5) return { bg: 'linear-gradient(135deg, #4CAF50, #45a049)', border: '#4CAF50' };
+    if (level < 10) return { bg: 'linear-gradient(135deg, #2196F3, #1976D2)', border: '#2196F3' };
+    if (level < 20) return { bg: 'linear-gradient(135deg, #9C27B0, #7B1FA2)', border: '#9C27B0' };
+    if (level < 30) return { bg: 'linear-gradient(135deg, #FF9800, #F57C00)', border: '#FF9800' };
+    if (level < 50) return { bg: 'linear-gradient(135deg, #F44336, #D32F2F)', border: '#F44336' };
+    return { bg: 'linear-gradient(135deg, #FFD700, #FFA500)', border: '#FFD700' };
+  };
+
+  const startCombat = () => {
+    const newEnemy = generateEnemy();
+    setEnemy(newEnemy);
+    setCombat(true);
+    setEnemyEffects({ slow: false, stun: false, shock: false, poison: false });
+    if (newEnemy.isBoss) {
+      addLog(`👑 BOSS APARECEU! ${newEnemy.name} ${newEnemy.isFast ? '⚡ RÁPIDO' : '🐢 LENTO'}`);
+    } else {
+      addLog(`${newEnemy.name} apareceu! ${newEnemy.isFast ? '⚡ RÁPIDO' : '🐢 LENTO'}`);
+    }
+  };
+
+  const escapeBoss = () => {
+    setPlayer(prev => ({ ...prev, bossCounter: prev.bossCounter + 10 }));
+    addLog('🏃 Você escapou do boss!');
+  };
+
+  const saveGame = () => {
+    if (!currentSaveSlot) return;
+    const saveData = { player, characterName, characterIcon, equipment, inventory, equippedSpells, mana };
+    localStorage.setItem(`rpgSave${currentSaveSlot}`, JSON.stringify(saveData));
+    addLog('💾 Jogo salvo!');
+  };
+
+  const resetGame = () => {
+    if (window.confirm('Voltar ao menu inicial?')) {
+      setGameStarted(false);
+      setShowLoadScreen(true);
+      setShowCharacterCreation(false);
+    }
+  };
+
+  const startNewGame = () => {
+    if (!characterName.trim()) return window.alert('Digite um nome!');
+    let slot = null;
+    for (let i = 1; i <= 3; i++) {
+      if (!localStorage.getItem(`rpgSave${i}`)) {
+        slot = i;
+        break;
+      }
+    }
+    if (!slot) return window.alert('Todos os slots estão ocupados! Delete um save primeiro.');
+    setCurrentSaveSlot(slot);
+    setGameStarted(true);
+    setShowCharacterCreation(false);
+  };
+
+  const loadGame = (slot) => {
+    const saved = localStorage.getItem(`rpgSave${slot}`);
+    if (!saved) return window.alert('Nenhum jogo salvo encontrado!');
+    try {
+      const data = JSON.parse(saved);
+      setPlayer(data.player);
+      setCharacterName(data.characterName);
+      setCharacterIcon(data.characterIcon);
+      setEquipment(data.equipment);
+      setInventory(data.inventory);
+      setEquippedSpells(data.equippedSpells);
+      setMana(data.mana);
+      setCurrentSaveSlot(slot);
+      setGameStarted(true);
+      setShowCharacterCreation(false);
+      setShowLoadScreen(false);
+    } catch (e) {
+      window.alert('Erro ao carregar jogo!');
+    }
+  };
+
+  const deleteSave = (slot) => {
+    if (window.confirm('Deletar este personagem?')) {
+      localStorage.removeItem(`rpgSave${slot}`);
+      const saves = [];
+      for (let i = 1; i <= 3; i++) {
+        if (localStorage.getItem(`rpgSave${i}`)) saves.push(i);
+      }
+      if (saves.length === 0) {
+        setShowLoadScreen(false);
+        setShowCharacterCreation(true);
+      } else {
+        window.location.reload();
+      }
+    }
+  };
+
+  const startNewGameFromLoad = () => {
+    setShowLoadScreen(false);
+    setShowCharacterCreation(true);
+  };
+
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if (e.key === ' ' || e.key === 'Spacebar') {
+        e.preventDefault();
+        if (levelUpPoints === 0 && combat && enemy?.hp > 0) {
+          playerAttack();
+        }
+      }
+      if (e.key === 'b' || e.key === 'B') {
+        if (!combat && levelUpPoints === 0) {
+          startCombat();
+        }
+      }
+      if (e.key === 'i' || e.key === 'I') {
+        setShowInventory(prev => !prev);
+      }
+      if (e.key === 'm' || e.key === 'M') {
+        setShowSpellbook(prev => !prev);
+      }
+      if (e.key === 's' || e.key === 'S') {
+        if (!combat) saveGame();
+      }
+      if (combat && enemy?.hp > 0) {
+        const spell = getEquippedSpells().find(s => s.key.toLowerCase() === e.key.toLowerCase());
+        if (spell) castSpell(spell);
+      }
+      if (levelUpPoints > 0) {
+        if (e.key === '1') addStat('strength');
+        if (e.key === '2') addStat('agility');
+        if (e.key === '3') addStat('intelligence');
+        if (e.key === '4') addStat('vitality');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [combat, levelUpPoints, enemy, mana, equippedSpells]);
+
+  useEffect(() => {
+    if (combat && enemy) {
+      const currentSpeed = enemyEffects.slow ? enemy.attackSpeed * 2 : enemy.attackSpeed;
+      setAttackTimer(currentSpeed);
+      
+      clearInterval(enemyTimerRef.current);
+      clearInterval(timerIntervalRef.current);
+      
+      enemyTimerRef.current = setInterval(() => {
+        enemyAttack();
+        const speed = enemyEffects.slow ? enemy.attackSpeed * 2 : enemy.attackSpeed;
+        setAttackTimer(speed);
+      }, currentSpeed);
+      
+      timerIntervalRef.current = setInterval(() => {
+        setAttackTimer(prev => Math.max(0, prev - 100));
+      }, 100);
+    }
+
+    return () => {
+      clearInterval(enemyTimerRef.current);
+      clearInterval(timerIntervalRef.current);
+    };
+  }, [combat, enemy?.name, enemyEffects.slow]);
+
+  if (showLoadScreen) {
+    const saves = [];
+    for (let i = 1; i <= 3; i++) {
+      const saved = localStorage.getItem(`rpgSave${i}`);
+      if (saved) {
+        try {
+          saves.push({ slot: i, data: JSON.parse(saved) });
+        } catch (e) {}
+      }
+    }
+
+    return (
+      <div className="character-creation">
+        <div className="creation-modal">
+          <h1>⚔️ Selecionar Personagem</h1>
+          <div style={{ marginBottom: '20px' }}>
+            {saves.map(({ slot, data }) => (
+              <div key={slot} style={{ background: 'rgba(255,255,255,0.1)', padding: '20px', borderRadius: '10px', marginBottom: '15px', border: '2px solid transparent', transition: 'all 0.2s', position: 'relative' }}>
+                <button onClick={() => deleteSave(slot)} style={{ position: 'absolute', top: '10px', right: '10px', background: '#f44336', border: 'none', color: 'white', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer', fontSize: '0.9em' }}>🗑️</button>
+                <div onClick={() => loadGame(slot)} style={{ cursor: 'pointer' }} onMouseEnter={(e) => e.currentTarget.parentElement.style.borderColor = '#667eea'} onMouseLeave={(e) => e.currentTarget.parentElement.style.borderColor = 'transparent'}>
+                  <div style={{ fontSize: '3em', textAlign: 'center', marginBottom: '10px' }}>{data.characterIcon}</div>
+                  <h3 style={{ textAlign: 'center', marginBottom: '10px' }}>Slot {slot}: {data.characterName}</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.9em' }}>
+                    <span>🎯 Nível: {data.player.level}</span>
+                    <span>❤️ HP: {data.player.hp}/{data.player.maxHp}</span>
+                    <span>💪 Força: {data.player.strength}</span>
+                    <span>⚡ Agilidade: {data.player.agility}</span>
+                    <span>🧠 Inteligência: {data.player.intelligence}</span>
+                    <span>❤️ Vitalidade: {data.player.vitality}</span>
+                    <span>💀 Abates: {data.player.kills}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <button onClick={startNewGameFromLoad} className="btn-primary" style={{ width: '100%' }}>Novo Jogo</button>
+        </div>
+      </div>
+    );
+  }
+
+  if (showCharacterCreation) {
+    const icons = ['🧙', '🧙‍♀️', '🧙‍♂️', '🧝', '🧝‍♀️', '🧝‍♂️', '🦸', '🦸‍♀️', '🦸‍♂️', '🦹', '🦹‍♀️', '🦹‍♂️'];
+    return (
+      <div className="character-creation">
+        <div className="creation-modal">
+          <h1>⚔️ Criar Personagem</h1>
+          <div className="creation-section">
+            <label>Nome:</label>
+            <input type="text" value={characterName} onChange={(e) => setCharacterName(e.target.value)} placeholder="Digite o nome..." maxLength={20} autoFocus />
+          </div>
+          <div className="creation-section">
+            <label>Escolha seu Ícone:</label>
+            <div className="icon-selector">
+              {icons.map(icon => (
+                <div key={icon} className={`icon-option ${characterIcon === icon ? 'selected' : ''}`} onClick={() => setCharacterIcon(icon)}>{icon}</div>
+              ))}
+            </div>
+          </div>
+          <button onClick={startNewGame} className="btn-primary" style={{ width: '100%' }}>Começar Aventura</button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!gameStarted) return null;
+
+  const formatTime = () => {
+    return currentTime.toLocaleString('pt-BR', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: 'numeric', 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      second: '2-digit' 
+    });
+  };
+
+  return (
+    <div className={`game ${screenEffect ? `effect-${screenEffect}` : ''}`}>
+      <div className="news-ticker">
+        <div className="news-ticker-content">
+          <span>⚔️ Sabugada v1.0 - {formatTime()}</span>
+          <span>⚔️ Sabugada v1.0 - {formatTime()}</span>
+          <span>⚔️ Sabugada v1.0 - {formatTime()}</span>
+        </div>
+      </div>
+      {levelUpPoints > 0 && (
+        <div className="level-up">
+          <h2>🎉 Level Up! Distribua {levelUpPoints} pontos</h2>
+          <div className="stat-buttons">
+            <button onClick={() => addStat('strength')} className="btn-stat">💪 +1 Força [1]</button>
+            <button onClick={() => addStat('agility')} className="btn-stat">⚡ +1 Agilidade [2]</button>
+            <button onClick={() => addStat('intelligence')} className="btn-stat">🧠 +1 Inteligência [3]</button>
+            <button onClick={() => addStat('vitality')} className="btn-stat">❤️ +1 Vitalidade [4]</button>
+          </div>
+        </div>
+      )}
+
+      {showSpellbook && (
+        <div className="modal-overlay" onClick={() => setShowSpellbook(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2>📚 Grimoire de Magias</h2>
+            <button className="close-btn" onClick={() => setShowSpellbook(false)}>×</button>
+            
+            <div className="spellbook-slots">
+              <h3>Magias Equipadas</h3>
+              <div className="equipped-spells">
+                {equippedSpells.map((spellId, index) => {
+                  const spell = allSpells.find(s => s.id === spellId);
+                  return (
+                    <div key={index} className="spell-slot">
+                      <strong>[{['Q', 'W', 'E', 'R'][index]}]</strong>
+                      {spell && <span>{spell.icon} {spell.name}</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="spellbook-list">
+              <h3>Magias Disponíveis</h3>
+              {allSpells.filter(s => s.unlockLevel <= player.level).map(spell => (
+                <div key={spell.id} className="spellbook-item">
+                  <div className="spell-info">
+                    <strong>{spell.icon} {spell.name}</strong>
+                    <small>Custo: {spell.cost} mana | Nível {spell.unlockLevel}</small>
+                  </div>
+                  <div className="spell-equip-btns">
+                    {[0, 1, 2, 3].map(slot => (
+                      <button 
+                        key={slot}
+                        className="btn-equip-spell"
+                        onClick={() => equipSpell(spell.id, slot)}
+                      >
+                        [{['Q', 'W', 'E', 'R'][slot]}]
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="spell-progression">
+              <h3>Progresso de Magias</h3>
+              <div className="spell-milestones">
+                {[1, 10, 20, 30, 40, 50, 60, 70].map(level => {
+                  const spellsAtLevel = allSpells.filter(s => s.unlockLevel === level);
+                  const isUnlocked = player.level >= level;
+                  return (
+                    <div key={level} className={`milestone ${isUnlocked ? 'unlocked' : 'locked'}`}>
+                      <div className="milestone-level">Nv.{level}</div>
+                      <div className="milestone-spells">
+                        {spellsAtLevel.map(spell => (
+                          <span key={spell.id} className="milestone-icon" title={spell.name}>
+                            {spell.icon}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {lootedItem && (
+        <div className="modal-overlay" onClick={() => setLootedItem(null)}>
+          <div className="loot-modal" onClick={(e) => e.stopPropagation()}>
+            <h2>🎉 Item Obtido!</h2>
+            <div className={`loot-item ${lootedItem.rarity.toLowerCase()}`}>
+              <h3>{lootedItem.name}</h3>
+              <div className="loot-stats">
+                {lootedItem.strength > 0 && <span>💪 Força: +{lootedItem.strength}</span>}
+                {lootedItem.agility > 0 && <span>⚡ Agilidade: +{lootedItem.agility}</span>}
+                {lootedItem.intelligence > 0 && <span>🧠 Inteligência: +{lootedItem.intelligence}</span>}
+                {lootedItem.hp > 0 && <span>❤️ HP: +{lootedItem.hp}</span>}
+              </div>
+            </div>
+            <button className="btn-primary" onClick={() => setLootedItem(null)}>Continuar</button>
+          </div>
+        </div>
+      )}
+
+      {showInventory && (
+        <div className="modal-overlay" onClick={() => setShowInventory(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2>Equipamento e Inventário</h2>
+            <button className="close-btn" onClick={() => setShowInventory(false)}>×</button>
+            
+            <div className="equipment">
+              <h3>Equipamento</h3>
+              <div className="equipment-paper-doll">
+                <div className="equipment-row">
+                  <div className="equipment-slot" onClick={() => unequipItem('helmet')}>
+                    {equipment.helmet ? (
+                      <div className={`item ${equipment.helmet.rarity.toLowerCase()}`}>
+                        <strong>🧢 {equipment.helmet.name}</strong>
+                        <small>HP+{equipment.helmet.hp} 💪+{equipment.helmet.strength}</small>
+                      </div>
+                    ) : <div className="empty-slot">🧢 Capacete</div>}
+                  </div>
+                </div>
+                
+                <div className="equipment-row">
+                  <div className="equipment-slot" onClick={() => unequipItem('weapon')}>
+                    {equipment.weapon ? (
+                      <div className={`item ${equipment.weapon.rarity.toLowerCase()}`}>
+                        <strong>⚔️ {equipment.weapon.name}</strong>
+                        <small>💪+{equipment.weapon.strength} ⚡+{equipment.weapon.agility}</small>
+                      </div>
+                    ) : <div className="empty-slot">⚔️ Arma</div>}
+                  </div>
+                  
+                  <div className="equipment-slot" onClick={() => unequipItem('chest')}>
+                    {equipment.chest ? (
+                      <div className={`item ${equipment.chest.rarity.toLowerCase()}`}>
+                        <strong>🛡️ {equipment.chest.name}</strong>
+                        <small>HP+{equipment.chest.hp} 💪+{equipment.chest.strength}</small>
+                      </div>
+                    ) : <div className="empty-slot">🛡️ Peitoral</div>}
+                  </div>
+                  
+                  <div className="equipment-slot" onClick={() => unequipItem('accessory')}>
+                    {equipment.accessory ? (
+                      <div className={`item ${equipment.accessory.rarity.toLowerCase()}`}>
+                        <strong>💍 {equipment.accessory.name}</strong>
+                        <small>⚡+{equipment.accessory.agility} 💪+{equipment.accessory.strength}</small>
+                      </div>
+                    ) : <div className="empty-slot">💍 Acessório</div>}
+                  </div>
+                </div>
+                
+                <div className="equipment-row">
+                  <div className="equipment-slot" onClick={() => unequipItem('legs')}>
+                    {equipment.legs ? (
+                      <div className={`item ${equipment.legs.rarity.toLowerCase()}`}>
+                        <strong>🧤 {equipment.legs.name}</strong>
+                        <small>HP+{equipment.legs.hp} 💪+{equipment.legs.strength}</small>
+                      </div>
+                    ) : <div className="empty-slot">🧤 Perneira</div>}
+                  </div>
+                </div>
+                
+                <div className="equipment-row">
+                  <div className="equipment-slot" onClick={() => unequipItem('boots')}>
+                    {equipment.boots ? (
+                      <div className={`item ${equipment.boots.rarity.toLowerCase()}`}>
+                        <strong>🥾 {equipment.boots.name}</strong>
+                        <small>⚡+{equipment.boots.agility} 💪+{equipment.boots.strength}</small>
+                      </div>
+                    ) : <div className="empty-slot">🥾 Botas</div>}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="inventory">
+              <h3>Inventário ({inventory.length})</h3>
+              {inventory.length > 0 ? (
+                <div className="inventory-items">
+                  {inventory.map(item => (
+                    <div key={item.id} className={`item ${item.rarity.toLowerCase()}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div onClick={() => { equipItem(item); }} style={{ flex: 1, cursor: 'pointer' }}>
+                        <strong>{item.name}</strong>
+                        <small>
+                          {item.strength > 0 && `💪+${item.strength} `}
+                          {item.agility > 0 && `⚡+${item.agility} `}
+                          {item.hp > 0 && `HP+${item.hp}`}
+                        </small>
+                      </div>
+                      <button onClick={(e) => { e.stopPropagation(); discardItem(item.id); }} style={{ background: '#f44336', border: 'none', color: 'white', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer', fontSize: '0.8em', marginLeft: '10px' }}>🗑️</button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p style={{ opacity: 0.5, textAlign: 'center', padding: '20px' }}>Nenhum item no inventário</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="player-sidebar">
+        <div className="player-stats">
+          <div className="player-avatar" style={{ background: getPlayerColor().bg, borderColor: getPlayerColor().border }}>
+            {characterIcon}
+          </div>
+          <h2>{characterName} - Nv.{player.level}</h2>
+          <div className="hp-bar">
+            <div className="hp-fill" style={{ width: `${(player.hp / (player.maxHp + getTotalStats().maxHp)) * 100}%` }}></div>
+            <span>{player.hp} / {player.maxHp + getTotalStats().maxHp} HP</span>
+          </div>
+          <div className="xp-bar">
+            <div className="xp-fill" style={{ width: `${(player.xp / player.xpToNext) * 100}%` }}></div>
+            <span>{player.xp} / {player.xpToNext} XP</span>
+          </div>
+          <div className="hp-bar" style={{ marginTop: '10px' }}>
+            <div className="xp-fill" style={{ width: `${(mana / maxMana) * 100}%`, background: 'linear-gradient(90deg, #4444ff, #6666ff)' }}></div>
+            <span>{mana} / {maxMana} Mana</span>
+          </div>
+          <div className="stats">
+            <span title="Aumenta o dano base dos ataques">💪 Força: {player.strength + getTotalStats().strength}</span>
+            <span title="Aumenta chance de crítico (x2 dano)">⚡ Agilidade: {player.agility + getTotalStats().agility}</span>
+            <span title="Aumenta dano de magias">🧠 Inteligência: {player.intelligence + getTotalStats().intelligence}</span>
+            <span title="Regenera HP e Mana">❤️ Vitalidade: {player.vitality}</span>
+            <span>💀 Abates: {player.kills}</span>
+          </div>
+        </div>
+
+        <div className="sidebar-buttons">
+          <button className="btn-sidebar" onClick={() => setShowInventory(true)}>
+            🎒 Inventário [I] {inventory.length > 0 && `(${inventory.length})`}
+          </button>
+
+          <button className="btn-sidebar" onClick={() => setShowSpellbook(true)}>
+            📚 Magias [M]
+          </button>
+
+          <button className="btn-sidebar" onClick={saveGame}>
+            💾 Salvar [S]
+          </button>
+
+          <button className="btn-sidebar btn-reset" onClick={resetGame}>
+            🚪 Sair
+          </button>
+        </div>
+
+        <div className="spells">
+          <h3>Magias</h3>
+          {getEquippedSpells().map(spell => (
+            <button 
+              key={spell.id}
+              className="spell-btn"
+              onClick={() => castSpell(spell)}
+              disabled={mana < spell.cost || !combat || !enemy || enemy.hp <= 0 || spell.unlockLevel > player.level}
+              title={`Custo: ${spell.cost} mana`}
+            >
+              {spell.icon} {spell.name} [{spell.key}]
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="main-content">
+        <div className="actions">
+          {!combat && levelUpPoints === 0 ? (
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <button onClick={startCombat} className="btn-primary" style={(player.bossCounter + 1) % 10 === 0 ? { background: 'linear-gradient(135deg, #FFD700, #FFA500)', color: '#000', fontWeight: 'bold', fontSize: '1.3em' } : {}}>
+                {(player.bossCounter + 1) % 10 === 0 ? '👑 ENFRENTAR O BOSS [B]' : 'Buscar Inimigo [B]'}
+              </button>
+              {(player.bossCounter + 1) % 10 === 0 && (
+                <button onClick={escapeBoss} className="btn-primary" style={{ background: 'linear-gradient(135deg, #f44336, #d32f2f)' }}>
+                  🏃 ESCAPAR
+                </button>
+              )}
+            </div>
+          ) : levelUpPoints === 0 ? (
+            <button onClick={playerAttack} className="btn-attack" disabled={enemy?.hp <= 0}>
+              Sabugar [ESPAÇO]
+            </button>
+          ) : null}
+        </div>
+
+        {enemy ? (
+          <div className="enemy-stats">
+            <div className="enemy-avatar">
+              👹
+              {floatingText && (
+                <div className={`floating-text ${floatingText.type}`}>
+                  {floatingText.text}
+                </div>
+              )}
+            </div>
+            <h2>{enemy.name} {enemy.isFast ? '⚡' : '🐢'}</h2>
+            {(enemyEffects.slow || enemyEffects.stun || enemyEffects.shock || enemyEffects.poison) && (
+              <div className="enemy-effects">
+                {enemyEffects.slow && <span className="effect-badge">❄️ Lento</span>}
+                {enemyEffects.stun && <span className="effect-badge">⚡ Paralisado</span>}
+                {enemyEffects.shock && <span className="effect-badge">⚡ Eletrificado</span>}
+                {enemyEffects.poison && <span className="effect-badge">🧪 Envenenado</span>}
+              </div>
+            )}
+            <div className="hp-bar enemy">
+              <div className="hp-fill" style={{ width: `${(enemy.hp / enemy.maxHp) * 100}%` }}></div>
+              <span>{enemy.hp} / {enemy.maxHp} HP</span>
+            </div>
+            {combat && (
+              <div className="attack-timer">
+                <div className="timer-fill" style={{ width: `${(attackTimer / enemy.attackSpeed) * 100}%` }}></div>
+                <span>Próximo ataque: {(attackTimer / 1000).toFixed(1)}s</span>
+              </div>
+            )}
+            <div className="stats">
+              <span>💪 {enemy.strength}</span>
+              <span>⚡ {enemy.agility}</span>
+              <span>🧠 {enemy.intelligence}</span>
+              <span>⏱️ {(enemy.attackSpeed / 1000).toFixed(1)}s</span>
+            </div>
+          </div>
+        ) : (
+          <div className="enemy-stats" style={{ opacity: 0.3 }}>
+            <div className="enemy-avatar">
+              ❓
+            </div>
+            <h2>Nenhum inimigo</h2>
+            <p style={{ textAlign: 'center', marginTop: '20px' }}>Clique em "Buscar Inimigo" para começar</p>
+          </div>
+        )}
+
+        <div className="log">
+          <h3>Log de Combate</h3>
+          {log.map((msg, i) => (
+            <div key={i} className="log-entry">{msg}</div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default App;
