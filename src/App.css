@@ -80,7 +80,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 15px;
-  padding: 20px;
+  padding: 7px;
   background: rgba(0,0,0,0.2);
   border-right: 2px solid rgba(255,255,255,0.1);
   overflow-y: auto;
@@ -1125,5 +1125,83 @@ button:disabled {
   to {
     opacity: 1;
     transform: translateX(0);
+  }
+}
+
+.game.effect-death {
+  animation: deathAnimation 2s ease-out;
+}
+
+@keyframes deathAnimation {
+  0% {
+    filter: brightness(1);
+  }
+  10% {
+    filter: brightness(2) saturate(0);
+  }
+  20% {
+    filter: brightness(0.3) saturate(3) hue-rotate(-30deg);
+  }
+  40% {
+    filter: brightness(0.1) saturate(5) hue-rotate(-30deg);
+  }
+  60% {
+    filter: brightness(0.05) saturate(10) hue-rotate(-30deg);
+  }
+  80% {
+    filter: brightness(0) saturate(0);
+  }
+  100% {
+    filter: brightness(1);
+  }
+}
+
+.death-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10000;
+  text-align: center;
+  animation: deathPopup 2s ease-out;
+  pointer-events: none;
+}
+
+.death-popup h1 {
+  font-size: 8em;
+  color: #ff0000;
+  text-shadow: 0 0 30px #ff0000, 0 0 60px #ff0000, 0 0 90px #ff0000, 4px 4px 8px rgba(0,0,0,0.8);
+  margin: 0;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+
+.death-popup p {
+  font-size: 2.5em;
+  color: #ffaaaa;
+  text-shadow: 0 0 20px #ff0000, 2px 2px 4px rgba(0,0,0,0.8);
+  margin-top: 20px;
+  font-weight: bold;
+}
+
+@keyframes deathPopup {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+  25% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  85% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
   }
 }

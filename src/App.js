@@ -73,6 +73,8 @@ const App = () => {
   const [floatingText, setFloatingText] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [nextAttackKey, setNextAttackKey] = useState('ArrowLeft');
+  const [showDeathPopup, setShowDeathPopup] = useState(false);
+  const [deathXpLoss, setDeathXpLoss] = useState(0);
   const enemyTimerRef = useRef(null);
   const timerIntervalRef = useRef(null);
   const playerRef = useRef(player);
@@ -622,18 +624,25 @@ const App = () => {
     clearInterval(enemyTimerRef.current);
     
     const xpLost = Math.floor(player.xp * 0.5);
-    const newXp = Math.max(0, player.xp - xpLost);
-    const bonus = getTotalStats();
+    setDeathXpLoss(xpLost);
+    setShowDeathPopup(true);
+    triggerScreenEffect('death');
     
-    setPlayer(prev => ({
-      ...prev,
-      hp: prev.maxHp + bonus.maxHp,
-      xp: newXp
-    }));
-    
-    addLog(`💀 VOCÊ MORREU! Perdeu ${xpLost} XP`);
-    setEnemy(null);
-    setLog([]);
+    setTimeout(() => {
+      const newXp = Math.max(0, player.xp - xpLost);
+      const bonus = getTotalStats();
+      
+      setPlayer(prev => ({
+        ...prev,
+        hp: prev.maxHp + bonus.maxHp,
+        xp: newXp
+      }));
+      
+      setShowDeathPopup(false);
+      addLog(`💀 VOCÊ MORREU! Perdeu ${xpLost} XP`);
+      setEnemy(null);
+      setLog([]);
+    }, 2000);
   };
 
   const getPlayerColor = () => {
@@ -911,6 +920,13 @@ const App = () => {
 
   return (
     <div className={`game ${screenEffect ? `effect-${screenEffect}` : ''}`}>
+      {showDeathPopup && (
+        <div className="death-popup">
+          <h1>FALECEU</h1>
+          <p>- {deathXpLoss} XP</p>
+        </div>
+      )}
+      
       <div className="news-ticker">
         <div className="news-ticker-content">
           <span>⚔️ Sabugada v1.0 - {formatTime()}</span>
