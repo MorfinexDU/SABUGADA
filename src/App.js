@@ -357,8 +357,26 @@ const App = () => {
     { id: 8, name: 'Dimensão do Caos', minLevel: 71, maxLevel: 100, icon: '🌀' }
   ];
 
+  const getInfiniteDungeon = (dungeonId) => {
+    if (dungeonId <= 8) return null;
+    const tier = dungeonId - 8;
+    const baseLevel = 100 + (tier - 1) * 25;
+    return {
+      id: dungeonId,
+      name: `Dimensão do Infinito ${tier}`,
+      minLevel: baseLevel + 1,
+      maxLevel: baseLevel + 25,
+      icon: '♾️'
+    };
+  };
+
+  const getCurrentDungeonInfo = () => {
+    const baseDungeon = dungeons.find(d => d.id === currentDungeon);
+    return baseDungeon || getInfiniteDungeon(currentDungeon);
+  };
+
   const generateEnemy = () => {
-    const dungeon = dungeons.find(d => d.id === currentDungeon);
+    const dungeon = getCurrentDungeonInfo();
     const isBoss = (player.bossCounter + 1) % 10 === 0;
     const difficulty = dungeon.minLevel + Math.floor(Math.random() * (dungeon.maxLevel - dungeon.minLevel + 1));
     const speed = 800 + Math.random() * 1500;
@@ -501,9 +519,14 @@ const App = () => {
     let newUnlockedDungeons = player.unlockedDungeons;
     if (enemy.isBoss && newBossCounter % 10 === 0) {
       const nextDungeon = currentDungeon + 1;
-      if (nextDungeon <= dungeons.length && nextDungeon > player.unlockedDungeons) {
+      if (nextDungeon > player.unlockedDungeons) {
         newUnlockedDungeons = nextDungeon;
-        addLog(`🎉 Nova masmorra desbloqueada: ${dungeons[nextDungeon - 1].name}!`);
+        const nextDungeonInfo = getCurrentDungeonInfo();
+        if (nextDungeon <= 8) {
+          addLog(`🎉 Nova masmorra desbloqueada: ${dungeons[nextDungeon - 1].name}!`);
+        } else {
+          addLog(`🎉 Nova dimensão desbloqueada: Dimensão do Infinito ${nextDungeon - 8}!`);
+        }
       }
     }
     
@@ -843,6 +866,34 @@ const App = () => {
           <span>⚔️ Sabugada v1.0 - {formatTime()}</span>
         </div>
       </div>
+
+      <div className="dungeon-sidebar">
+        <h3 style={{ marginBottom: '10px', fontSize: '1em' }}>🏛️ Masmorras</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: 'calc(100vh - 100px)', overflowY: 'auto' }}>
+          {[...dungeons, ...Array.from({ length: Math.max(0, player.unlockedDungeons - 8) }, (_, i) => getInfiniteDungeon(9 + i))].map(dungeon => (
+            <button 
+              key={dungeon.id}
+              onClick={() => setCurrentDungeon(dungeon.id)}
+              disabled={dungeon.id > player.unlockedDungeons}
+              style={{ 
+                padding: '10px', 
+                background: currentDungeon === dungeon.id ? 'linear-gradient(135deg, #667eea, #764ba2)' : 'rgba(255,255,255,0.1)',
+                border: currentDungeon === dungeon.id ? '2px solid #667eea' : '2px solid transparent',
+                borderRadius: '8px',
+                color: 'white',
+                cursor: dungeon.id > player.unlockedDungeons ? 'not-allowed' : 'pointer',
+                opacity: dungeon.id > player.unlockedDungeons ? 0.3 : 1,
+                fontSize: '0.85em',
+                textAlign: 'left',
+                transition: 'all 0.2s'
+              }}
+            >
+              <div>{dungeon.icon} {dungeon.name}</div>
+              <small style={{ opacity: 0.8 }}>Nv.{dungeon.minLevel}-{dungeon.maxLevel}</small>
+            </button>
+          ))}
+        </div>
+      </div>
       {levelUpPoints > 0 && (
         <div className="level-up">
           <h2>🎉 Level Up! Distribua {levelUpPoints} pontos</h2>
@@ -1111,44 +1162,15 @@ const App = () => {
       <div className="main-content">
         <div className="actions">
           {!combat && levelUpPoints === 0 ? (
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexDirection: 'column', alignItems: 'center' }}>
-              <button onClick={() => setShowDungeonSelect(!showDungeonSelect)} className="btn-primary" style={{ background: 'linear-gradient(135deg, #9C27B0, #7B1FA2)' }}>
-                🏛️ {dungeons.find(d => d.id === currentDungeon)?.name}
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <button onClick={startCombat} className="btn-primary" style={(player.bossCounter + 1) % 10 === 0 ? { background: 'linear-gradient(135deg, #FFD700, #FFA500)', color: '#000', fontWeight: 'bold', fontSize: '1.3em' } : {}}>
+                {(player.bossCounter + 1) % 10 === 0 ? '👑 ENFRENTAR O BOSS [B]' : 'Buscar Inimigo [B]'}
               </button>
-              {showDungeonSelect && (
-                <div style={{ background: 'rgba(0,0,0,0.8)', padding: '15px', borderRadius: '10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', maxWidth: '500px' }}>
-                  {dungeons.map(dungeon => (
-                    <button 
-                      key={dungeon.id}
-                      onClick={() => { setCurrentDungeon(dungeon.id); setShowDungeonSelect(false); }}
-                      disabled={dungeon.id > player.unlockedDungeons}
-                      style={{ 
-                        padding: '10px', 
-                        background: currentDungeon === dungeon.id ? 'linear-gradient(135deg, #667eea, #764ba2)' : 'rgba(255,255,255,0.1)',
-                        border: 'none',
-                        borderRadius: '8px',
-                        color: 'white',
-                        cursor: dungeon.id > player.unlockedDungeons ? 'not-allowed' : 'pointer',
-                        opacity: dungeon.id > player.unlockedDungeons ? 0.3 : 1,
-                        fontSize: '0.9em'
-                      }}
-                    >
-                      {dungeon.icon} {dungeon.name}<br/>
-                      <small>Nv.{dungeon.minLevel}-{dungeon.maxLevel}</small>
-                    </button>
-                  ))}
-                </div>
-              )}
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button onClick={startCombat} className="btn-primary" style={(player.bossCounter + 1) % 10 === 0 ? { background: 'linear-gradient(135deg, #FFD700, #FFA500)', color: '#000', fontWeight: 'bold', fontSize: '1.3em' } : {}}>
-                  {(player.bossCounter + 1) % 10 === 0 ? '👑 ENFRENTAR O BOSS [B]' : 'Buscar Inimigo [B]'}
+              {(player.bossCounter + 1) % 10 === 0 && (
+                <button onClick={escapeBoss} className="btn-primary" style={{ background: 'linear-gradient(135deg, #f44336, #d32f2f)' }}>
+                  🏃 ESCAPAR
                 </button>
-                {(player.bossCounter + 1) % 10 === 0 && (
-                  <button onClick={escapeBoss} className="btn-primary" style={{ background: 'linear-gradient(135deg, #f44336, #d32f2f)' }}>
-                    🏃 ESCAPAR
-                  </button>
-                )}
-              </div>
+              )}
             </div>
           ) : levelUpPoints === 0 ? (
             <button onClick={playerAttack} className="btn-attack" disabled={enemy?.hp <= 0}>
