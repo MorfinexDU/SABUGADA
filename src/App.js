@@ -21,7 +21,8 @@ const App = () => {
     vitality: 10,
     kills: 0,
     bossCounter: 0,
-    unlockedDungeons: 1
+    unlockedDungeons: 1,
+    dungeonBossLevel: 1
   });
 
   const [enemy, setEnemy] = useState(null);
@@ -380,13 +381,23 @@ const App = () => {
   const generateEnemy = () => {
     const dungeon = getCurrentDungeonInfo();
     const isBoss = (player.bossCounter + 1) % 10 === 0;
-    const difficulty = dungeon.minLevel + Math.floor(Math.random() * (dungeon.maxLevel - dungeon.minLevel + 1));
+    const bossLevel = player.dungeonBossLevel;
+    const isFinalBoss = bossLevel >= dungeon.maxLevel;
+    
+    let difficulty;
+    if (isBoss) {
+      difficulty = Math.min(dungeon.minLevel + bossLevel - 1, dungeon.maxLevel);
+    } else {
+      const range = Math.min(bossLevel + 2, dungeon.maxLevel) - dungeon.minLevel;
+      difficulty = dungeon.minLevel + Math.floor(Math.random() * (range + 1));
+    }
+    
     const speed = 800 + Math.random() * 1500;
     const isFast = speed < 1400;
     
     if (isBoss) {
       return {
-        name: `👑 BOSS Nv.${difficulty}`,
+        name: isFinalBoss ? `👑 BOSS FINAL Nv.${difficulty}` : `👑 BOSS ${bossLevel} Nv.${difficulty}`,
         level: difficulty,
         hp: (240 + difficulty * 100) * 3,
         maxHp: (240 + difficulty * 100) * 3,
@@ -396,7 +407,8 @@ const App = () => {
         attackSpeed: speed * 0.8,
         xpReward: (15 + difficulty * 8) * 3,
         isFast,
-        isBoss: true
+        isBoss: true,
+        isFinalBoss
       };
     }
     
@@ -411,7 +423,8 @@ const App = () => {
       attackSpeed: speed,
       xpReward: 15 + difficulty * 8,
       isFast,
-      isBoss: false
+      isBoss: false,
+      isFinalBoss: false
     };
   };
 
@@ -525,16 +538,22 @@ const App = () => {
     const newBossCounter = player.bossCounter + 1;
     
     let newUnlockedDungeons = player.unlockedDungeons;
-    if (enemy.isBoss && newBossCounter % 10 === 0) {
-      const nextDungeon = currentDungeon + 1;
-      if (nextDungeon > player.unlockedDungeons) {
-        newUnlockedDungeons = nextDungeon;
-        const nextDungeonInfo = getCurrentDungeonInfo();
-        if (nextDungeon <= 8) {
-          addLog(`🎉 Nova masmorra desbloqueada: ${dungeons[nextDungeon - 1].name}!`);
-        } else {
-          addLog(`🎉 Nova dimensão desbloqueada: Dimensão do Infinito ${nextDungeon - 8}!`);
+    let newDungeonBossLevel = player.dungeonBossLevel;
+    
+    if (enemy.isBoss) {
+      if (enemy.isFinalBoss) {
+        const nextDungeon = currentDungeon + 1;
+        if (nextDungeon > player.unlockedDungeons) {
+          newUnlockedDungeons = nextDungeon;
+          if (nextDungeon <= 9) {
+            addLog(`🎉 Nova masmorra desbloqueada: ${dungeons[nextDungeon - 1].name}!`);
+          } else {
+            addLog(`🎉 Nova dimensão desbloqueada: Dimensão do Infinito ${nextDungeon - 9}!`);
+          }
         }
+        newDungeonBossLevel = 1;
+      } else {
+        newDungeonBossLevel++;
       }
     }
     
@@ -551,9 +570,9 @@ const App = () => {
     }
     
     if (newXp >= player.xpToNext) {
-      levelUp(newXp, newKills, newBossCounter, newUnlockedDungeons);
+      levelUp(newXp, newKills, newBossCounter, newUnlockedDungeons, newDungeonBossLevel);
     } else {
-      setPlayer(prev => ({ ...prev, xp: newXp, kills: newKills, bossCounter: newBossCounter, unlockedDungeons: newUnlockedDungeons }));
+      setPlayer(prev => ({ ...prev, xp: newXp, kills: newKills, bossCounter: newBossCounter, unlockedDungeons: newUnlockedDungeons, dungeonBossLevel: newDungeonBossLevel }));
     }
     
     setCombat(false);
@@ -561,7 +580,7 @@ const App = () => {
     clearInterval(enemyTimerRef.current);
   };
 
-  const levelUp = (currentXp, kills, bossCounter, unlockedDungeons) => {
+  const levelUp = (currentXp, kills, bossCounter, unlockedDungeons, dungeonBossLevel) => {
     const newLevel = player.level + 1;
     const overflow = currentXp - player.xpToNext;
     const bonus = getTotalStats();
@@ -575,7 +594,8 @@ const App = () => {
       hp: prev.maxHp + 15 + bonus.maxHp,
       kills,
       bossCounter,
-      unlockedDungeons
+      unlockedDungeons,
+      dungeonBossLevel
     }));
     
     setLevelUpPoints(3);
@@ -632,14 +652,19 @@ const App = () => {
     setCombat(true);
     setEnemyEffects({ slow: false, stun: false, shock: false, poison: false });
     if (newEnemy.isBoss) {
-      addLog(`👑 BOSS APARECEU! ${newEnemy.name} ${newEnemy.isFast ? '⚡ RÁPIDO' : '🐢 LENTO'}`);
+      if (newEnemy.isFinalBoss) {
+        addLog(`👑 BOSS FINAL APARECEU! ${newEnemy.name} ${newEnemy.isFast ? '⚡ RÁPIDO' : '🐢 LENTO'}`);
+      } else {
+        addLog(`👑 BOSS APARECEU! ${newEnemy.name} ${newEnemy.isFast ? '⚡ RÁPIDO' : '🐢 LENTO'}`);
+      }
     } else {
       addLog(`${newEnemy.name} apareceu! ${newEnemy.isFast ? '⚡ RÁPIDO' : '🐢 LENTO'}`);
     }
   };
 
   const escapeBoss = () => {
-    setPlayer(prev => ({ ...prev, bossCounter: prev.bossCounter + 10 }));
+    setPlayer(prev => ({ ...prev, bossCounter: prev.bossCounter - 1 }));
+    setLog([]);
     addLog('🏃 Você escapou do boss!');
   };
 
@@ -678,7 +703,7 @@ const App = () => {
     if (!saved) return window.alert('Nenhum jogo salvo encontrado!');
     try {
       const data = JSON.parse(saved);
-      setPlayer(data.player);
+      setPlayer(data.player.dungeonBossLevel ? data.player : { ...data.player, dungeonBossLevel: 1 });
       setCharacterName(data.characterName);
       setCharacterIcon(data.characterIcon);
       setEquipment(data.equipment);
@@ -724,7 +749,8 @@ const App = () => {
       vitality: 10,
       kills: 0,
       bossCounter: 0,
-      unlockedDungeons: 1
+      unlockedDungeons: 1,
+      dungeonBossLevel: 1
     });
     setEnemy(null);
     setCombat(false);
