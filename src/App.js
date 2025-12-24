@@ -348,19 +348,20 @@ const App = () => {
   };
 
   const dungeons = [
-    { id: 1, name: 'Masmorra Iniciante', minLevel: 1, maxLevel: 10, icon: '🏛️' },
-    { id: 2, name: 'Caverna Sombria', minLevel: 11, maxLevel: 20, icon: '⛰️' },
-    { id: 3, name: 'Floresta Maldita', minLevel: 21, maxLevel: 30, icon: '🌲' },
-    { id: 4, name: 'Castelo Assombrado', minLevel: 31, maxLevel: 40, icon: '🏰' },
-    { id: 5, name: 'Vulcão Infernal', minLevel: 41, maxLevel: 50, icon: '🌋' },
-    { id: 6, name: 'Torre Arcana', minLevel: 51, maxLevel: 60, icon: '🗼' },
-    { id: 7, name: 'Abismo Profundo', minLevel: 61, maxLevel: 70, icon: '🕳️' },
-    { id: 8, name: 'Dimensão do Caos', minLevel: 71, maxLevel: 100, icon: '🌀' }
+    { id: 1, name: 'Masmorra Iniciante', minLevel: 1, maxLevel: 5, icon: '🏛️' },
+    { id: 2, name: 'Caverna Sombria', minLevel: 6, maxLevel: 10, icon: '⛰️' },
+    { id: 3, name: 'Floresta Maldita', minLevel: 11, maxLevel: 20, icon: '🌲' },
+    { id: 4, name: 'Castelo Assombrado', minLevel: 21, maxLevel: 30, icon: '🏰' },
+    { id: 5, name: 'Vulcão Infernal', minLevel: 31, maxLevel: 40, icon: '🌋' },
+    { id: 6, name: 'Torre Arcana', minLevel: 41, maxLevel: 50, icon: '🗼' },
+    { id: 7, name: 'Abismo Profundo', minLevel: 51, maxLevel: 60, icon: '🕳️' },
+    { id: 8, name: 'Cripta Eterna', minLevel: 61, maxLevel: 70, icon: '⚰️' },
+    { id: 9, name: 'Dimensão do Caos', minLevel: 71, maxLevel: 100, icon: '🌀' }
   ];
 
   const getInfiniteDungeon = (dungeonId) => {
-    if (dungeonId <= 8) return null;
-    const tier = dungeonId - 8;
+    if (dungeonId <= 9) return null;
+    const tier = dungeonId - 9;
     const baseLevel = 100 + (tier - 1) * 25;
     return {
       id: dungeonId,
@@ -387,11 +388,11 @@ const App = () => {
       return {
         name: `👑 BOSS Nv.${difficulty}`,
         level: difficulty,
-        hp: (80 + difficulty * 35) * 3,
-        maxHp: (80 + difficulty * 35) * 3,
-        strength: (8 + difficulty * 4) * 1.5,
-        agility: (5 + difficulty * 2) * 1.5,
-        intelligence: (5 + difficulty * 2) * 1.5,
+        hp: (240 + difficulty * 100) * 3,
+        maxHp: (240 + difficulty * 100) * 3,
+        strength: (12 + difficulty * 6) * 1.5,
+        agility: (8 + difficulty * 3) * 1.5,
+        intelligence: (8 + difficulty * 3) * 1.5,
         attackSpeed: speed * 0.8,
         xpReward: (15 + difficulty * 8) * 3,
         isFast,
@@ -402,11 +403,11 @@ const App = () => {
     return {
       name: `Inimigo Nv.${difficulty}`,
       level: difficulty,
-      hp: 80 + difficulty * 35,
-      maxHp: 80 + difficulty * 35,
-      strength: 8 + difficulty * 4,
-      agility: 5 + difficulty * 2,
-      intelligence: 5 + difficulty * 2,
+      hp: 240 + difficulty * 100,
+      maxHp: 240 + difficulty * 100,
+      strength: 12 + difficulty * 6,
+      agility: 8 + difficulty * 3,
+      intelligence: 8 + difficulty * 3,
       attackSpeed: speed,
       xpReward: 15 + difficulty * 8,
       isFast,
@@ -423,10 +424,14 @@ const App = () => {
     const baseDmg = attacker.strength + bonus.strength;
     const critChance = (attacker.agility + bonus.agility) / 200;
     const isCrit = Math.random() < critChance;
+    
     let dmg = Math.floor(baseDmg * (isCrit ? 2 : 1) * (0.8 + Math.random() * 0.4));
     
-    if (attacker === playerRef.current && enemyEffects.shock) {
-      dmg = Math.floor(dmg * 1.5);
+    if (attacker === playerRef.current) {
+      dmg = Math.floor(dmg * 0.6);
+      if (enemyEffects.shock) {
+        dmg = Math.floor(dmg * 1.5);
+      }
     }
     
     return { dmg, isCrit };
@@ -707,6 +712,31 @@ const App = () => {
   };
 
   const startNewGameFromLoad = () => {
+    setPlayer({
+      level: 1,
+      xp: 0,
+      xpToNext: 100,
+      hp: 100,
+      maxHp: 100,
+      strength: 10,
+      agility: 10,
+      intelligence: 10,
+      vitality: 10,
+      kills: 0,
+      bossCounter: 0,
+      unlockedDungeons: 1
+    });
+    setEnemy(null);
+    setCombat(false);
+    setLog([]);
+    setEquipment({ weapon: null, helmet: null, chest: null, legs: null, boots: null, accessory: null });
+    setInventory([]);
+    setEquippedSpells(['fireball', 'slow', 'stun', 'shock']);
+    setMana(100);
+    setCurrentDungeon(1);
+    setCharacterName('');
+    setCharacterIcon('🧙');
+    setCurrentSaveSlot(null);
     setShowLoadScreen(false);
     setShowCharacterCreation(true);
   };
@@ -866,7 +896,7 @@ const App = () => {
       <div className="dungeon-sidebar">
         <h3 style={{ marginBottom: '10px', fontSize: '1em' }}>🏛️ Masmorras</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: 'calc(100vh - 100px)', overflowY: 'auto' }}>
-          {[...dungeons, ...Array.from({ length: Math.max(0, player.unlockedDungeons - 8) }, (_, i) => getInfiniteDungeon(9 + i))].map(dungeon => (
+          {[...dungeons, ...Array.from({ length: Math.max(0, player.unlockedDungeons - 9) }, (_, i) => getInfiniteDungeon(10 + i))].map(dungeon => (
             <button 
               key={dungeon.id}
               onClick={() => setCurrentDungeon(dungeon.id)}
