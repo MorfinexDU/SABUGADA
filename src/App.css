@@ -961,10 +961,19 @@ button:disabled {
   padding: 12px;
   border-radius: 8px;
   border-left: 4px solid;
-  cursor: pointer;
   transition: all 0.2s;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  pointer-events: auto;
+}
+
+.item button {
+  pointer-events: auto;
+  z-index: 10;
 }
 
 .item::before {
@@ -984,9 +993,10 @@ button:disabled {
 }
 
 .item:hover {
-  transform: translateX(5px) scale(1.02);
+  transform: scale(1.02);
   background: rgba(0,0,0,0.5);
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 1;
 }
 
 .item strong {

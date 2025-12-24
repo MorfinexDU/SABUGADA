@@ -20,7 +20,8 @@ const App = () => {
     intelligence: 10,
     vitality: 10,
     kills: 0,
-    bossCounter: 0
+    bossCounter: 0,
+    unlockedDungeons: 1
   });
 
   const [enemy, setEnemy] = useState(null);
@@ -28,6 +29,8 @@ const App = () => {
   const [log, setLog] = useState([]);
   const [attackTimer, setAttackTimer] = useState(0);
   const [levelUpPoints, setLevelUpPoints] = useState(0);
+  const [currentDungeon, setCurrentDungeon] = useState(1);
+  const [showDungeonSelect, setShowDungeonSelect] = useState(false);
   const [equipment, setEquipment] = useState({ 
     weapon: null, 
     helmet: null, 
@@ -108,8 +111,13 @@ const App = () => {
   useEffect(() => {
     const hpRegenInterval = setInterval(() => {
       setPlayer(prev => {
-        if (prev.hp < prev.maxHp + getTotalStats().maxHp && !combat) {
-          return { ...prev, hp: Math.min(prev.hp + Math.floor(prev.vitality / 3), prev.maxHp + getTotalStats().maxHp) };
+        const bonus = getTotalStats();
+        const baseRegen = Math.floor(prev.vitality / 3);
+        const legendaryRegen = bonus.regeneration > 0 ? Math.floor(prev.maxHp * (bonus.regeneration / 100)) : 0;
+        const totalRegen = baseRegen + legendaryRegen;
+        
+        if (prev.hp < prev.maxHp + bonus.maxHp && !combat) {
+          return { ...prev, hp: Math.min(prev.hp + totalRegen, prev.maxHp + bonus.maxHp) };
         }
         return prev;
       });
@@ -152,21 +160,38 @@ const App = () => {
     };
 
     if (rarityName === 'Lendário') {
-      const effects = ['vampirismo', 'regeneração', 'espinhos', 'velocidade'];
-      item.effect = effects[Math.floor(Math.random() * effects.length)];
+      const effectTypes = [
+        { name: 'vampirismo', min: 5, max: 30 },
+        { name: 'regeneração', min: 10, max: 50 },
+        { name: 'espinhos', min: 15, max: 40 },
+        { name: 'velocidade', min: 5, max: 25 },
+        { name: 'crítico', min: 5, max: 20 },
+        { name: 'resistência', min: 10, max: 30 }
+      ];
+      const selectedEffect = effectTypes[Math.floor(Math.random() * effectTypes.length)];
+      item.effect = selectedEffect.name;
+      item.effectValue = selectedEffect.min + Math.floor(Math.random() * (selectedEffect.max - selectedEffect.min + 1));
     }
 
     return item;
   };
 
   const getTotalStats = () => {
-    let bonus = { strength: 0, agility: 0, intelligence: 0, maxHp: 0 };
+    let bonus = { strength: 0, agility: 0, intelligence: 0, maxHp: 0, vampirism: 0, regeneration: 0, thorns: 0, speed: 0, crit: 0, resistance: 0 };
     Object.values(equipment).forEach(item => {
       if (item) {
         bonus.strength += item.strength;
         bonus.agility += item.agility;
         bonus.intelligence += item.intelligence;
         bonus.maxHp += item.hp;
+        if (item.effect && item.effectValue) {
+          if (item.effect === 'vampirismo') bonus.vampirism += item.effectValue;
+          if (item.effect === 'regeneração') bonus.regeneration += item.effectValue;
+          if (item.effect === 'espinhos') bonus.thorns += item.effectValue;
+          if (item.effect === 'velocidade') bonus.speed += item.effectValue;
+          if (item.effect === 'crítico') bonus.crit += item.effectValue;
+          if (item.effect === 'resistência') bonus.resistance += item.effectValue;
+        }
       }
     });
     return bonus;
@@ -321,9 +346,21 @@ const App = () => {
     setTimeout(() => setFloatingText(null), 1000);
   };
 
+  const dungeons = [
+    { id: 1, name: 'Masmorra Iniciante', minLevel: 1, maxLevel: 10, icon: '🏛️' },
+    { id: 2, name: 'Caverna Sombria', minLevel: 11, maxLevel: 20, icon: '⛰️' },
+    { id: 3, name: 'Floresta Maldita', minLevel: 21, maxLevel: 30, icon: '🌲' },
+    { id: 4, name: 'Castelo Assombrado', minLevel: 31, maxLevel: 40, icon: '🏰' },
+    { id: 5, name: 'Vulcão Infernal', minLevel: 41, maxLevel: 50, icon: '🌋' },
+    { id: 6, name: 'Torre Arcana', minLevel: 51, maxLevel: 60, icon: '🗼' },
+    { id: 7, name: 'Abismo Profundo', minLevel: 61, maxLevel: 70, icon: '🕳️' },
+    { id: 8, name: 'Dimensão do Caos', minLevel: 71, maxLevel: 100, icon: '🌀' }
+  ];
+
   const generateEnemy = () => {
+    const dungeon = dungeons.find(d => d.id === currentDungeon);
     const isBoss = (player.bossCounter + 1) % 10 === 0;
-    const difficulty = Math.floor(player.level / 2) + Math.floor(Math.random() * player.level);
+    const difficulty = dungeon.minLevel + Math.floor(Math.random() * (dungeon.maxLevel - dungeon.minLevel + 1));
     const speed = 800 + Math.random() * 1500;
     const isFast = speed < 1400;
     
@@ -380,16 +417,29 @@ const App = () => {
     if (!enemyRef.current || enemyRef.current.hp <= 0) return;
 
     const { dmg, isCrit } = calculateDamage(playerRef.current, enemyRef.current);
-    const newHp = Math.max(0, enemyRef.current.hp - dmg);
+    const bonus = getTotalStats();
+    
+    let finalDmg = dmg;
+    if (bonus.crit > 0 && isCrit) {
+      finalDmg = Math.floor(dmg * (1 + bonus.crit / 100));
+    }
+    
+    const newHp = Math.max(0, enemyRef.current.hp - finalDmg);
+    
+    if (bonus.vampirism > 0) {
+      const heal = Math.floor(finalDmg * (bonus.vampirism / 100));
+      setPlayer(prev => ({ ...prev, hp: Math.min(prev.hp + heal, prev.maxHp + bonus.maxHp) }));
+      if (heal > 0) addLog(`🧙 Vampirismo: +${heal} HP`);
+    }
     
     setEnemy(prev => ({ ...prev, hp: newHp }));
-    addLog(`Você ataca! ${dmg} de dano${isCrit ? ' CRÍTICO!' : ''}`);
+    addLog(`Você ataca! ${finalDmg} de dano${isCrit ? ' CRÍTICO!' : ''}`);
     
     if (isCrit) {
-      showFloatingText(`⚔️ ${dmg} CRIT!`, 'crit');
+      showFloatingText(`⚔️ ${finalDmg} CRIT!`, 'crit');
       triggerScreenEffect('crit');
     } else {
-      showFloatingText(`⚔️ ${dmg}`, 'attack');
+      showFloatingText(`⚔️ ${finalDmg}`, 'attack');
       triggerScreenEffect('attack');
     }
 
@@ -409,16 +459,27 @@ const App = () => {
     }
 
     const { dmg, isCrit } = calculateDamage(currentEnemy, currentPlayer);
+    const bonus = getTotalStats();
     let finalDmg = dmg;
     
+    if (bonus.resistance > 0) {
+      finalDmg = Math.floor(dmg * (1 - bonus.resistance / 100));
+    }
+    
     if (playerEffects.shield) {
-      finalDmg = Math.floor(dmg * 0.5);
-      addLog(`🛡️ Escudo absorveu ${dmg - finalDmg} de dano!`);
+      finalDmg = Math.floor(finalDmg * 0.5);
+      addLog(`🛡️ Escudo absorveu ${Math.floor(dmg - finalDmg)} de dano!`);
     }
     
     if (playerEffects.reflect) {
       setEnemy(prev => ({ ...prev, hp: Math.max(0, prev.hp - Math.floor(dmg * 0.3)) }));
       addLog(`🔮 Refletiu ${Math.floor(dmg * 0.3)} de dano!`);
+    }
+    
+    if (bonus.thorns > 0) {
+      const thornsDmg = Math.floor(dmg * (bonus.thorns / 100));
+      setEnemy(prev => ({ ...prev, hp: Math.max(0, prev.hp - thornsDmg) }));
+      addLog(`🌵 Espinhos: ${thornsDmg} de dano refletido!`);
     }
     
     const newHp = Math.max(0, currentPlayer.hp - finalDmg);
@@ -437,6 +498,15 @@ const App = () => {
     const newKills = player.kills + 1;
     const newBossCounter = player.bossCounter + 1;
     
+    let newUnlockedDungeons = player.unlockedDungeons;
+    if (enemy.isBoss && newBossCounter % 10 === 0) {
+      const nextDungeon = currentDungeon + 1;
+      if (nextDungeon <= dungeons.length && nextDungeon > player.unlockedDungeons) {
+        newUnlockedDungeons = nextDungeon;
+        addLog(`🎉 Nova masmorra desbloqueada: ${dungeons[nextDungeon - 1].name}!`);
+      }
+    }
+    
     const baseDropChance = enemy.isBoss ? 0.8 : 0.08 + (enemy.level * 0.005);
     const dropChance = Math.random();
     
@@ -450,9 +520,9 @@ const App = () => {
     }
     
     if (newXp >= player.xpToNext) {
-      levelUp(newXp, newKills, newBossCounter);
+      levelUp(newXp, newKills, newBossCounter, newUnlockedDungeons);
     } else {
-      setPlayer(prev => ({ ...prev, xp: newXp, kills: newKills, bossCounter: newBossCounter }));
+      setPlayer(prev => ({ ...prev, xp: newXp, kills: newKills, bossCounter: newBossCounter, unlockedDungeons: newUnlockedDungeons }));
     }
     
     setCombat(false);
@@ -460,7 +530,7 @@ const App = () => {
     clearInterval(enemyTimerRef.current);
   };
 
-  const levelUp = (currentXp, kills, bossCounter) => {
+  const levelUp = (currentXp, kills, bossCounter, unlockedDungeons) => {
     const newLevel = player.level + 1;
     const overflow = currentXp - player.xpToNext;
     const bonus = getTotalStats();
@@ -473,7 +543,8 @@ const App = () => {
       maxHp: prev.maxHp + 15 + bonus.maxHp,
       hp: prev.maxHp + 15 + bonus.maxHp,
       kills,
-      bossCounter
+      bossCounter,
+      unlockedDungeons
     }));
     
     setLevelUpPoints(3);
@@ -512,7 +583,8 @@ const App = () => {
         intelligence: 10,
         vitality: 10,
         kills: 0,
-        bossCounter: 0
+        bossCounter: 0,
+        unlockedDungeons: 1
       });
       setEnemy(null);
       setLog([]);
@@ -548,7 +620,7 @@ const App = () => {
 
   const saveGame = () => {
     if (!currentSaveSlot) return;
-    const saveData = { player, characterName, characterIcon, equipment, inventory, equippedSpells, mana };
+    const saveData = { player, characterName, characterIcon, equipment, inventory, equippedSpells, mana, currentDungeon };
     localStorage.setItem(`rpgSave${currentSaveSlot}`, JSON.stringify(saveData));
     addLog('💾 Jogo salvo!');
   };
@@ -588,6 +660,7 @@ const App = () => {
       setInventory(data.inventory);
       setEquippedSpells(data.equippedSpells);
       setMana(data.mana);
+      setCurrentDungeon(data.currentDungeon || 1);
       setCurrentSaveSlot(slot);
       setGameStarted(true);
       setShowCharacterCreation(false);
@@ -658,7 +731,9 @@ const App = () => {
 
   useEffect(() => {
     if (combat && enemy) {
-      const currentSpeed = enemyEffects.slow ? enemy.attackSpeed * 2 : enemy.attackSpeed;
+      const bonus = getTotalStats();
+      const speedBonus = bonus.speed > 0 ? (1 - bonus.speed / 100) : 1;
+      const currentSpeed = (enemyEffects.slow ? enemy.attackSpeed * 2 : enemy.attackSpeed) * speedBonus;
       setAttackTimer(currentSpeed);
       
       clearInterval(enemyTimerRef.current);
@@ -666,7 +741,7 @@ const App = () => {
       
       enemyTimerRef.current = setInterval(() => {
         enemyAttack();
-        const speed = enemyEffects.slow ? enemy.attackSpeed * 2 : enemy.attackSpeed;
+        const speed = (enemyEffects.slow ? enemy.attackSpeed * 2 : enemy.attackSpeed) * speedBonus;
         setAttackTimer(speed);
       }, currentSpeed);
       
@@ -860,6 +935,7 @@ const App = () => {
                 {lootedItem.agility > 0 && <span>⚡ Agilidade: +{lootedItem.agility}</span>}
                 {lootedItem.intelligence > 0 && <span>🧠 Inteligência: +{lootedItem.intelligence}</span>}
                 {lootedItem.hp > 0 && <span>❤️ HP: +{lootedItem.hp}</span>}
+                {lootedItem.effect && <span style={{ color: '#FFD700', fontWeight: 'bold' }}>✨ {lootedItem.effect.charAt(0).toUpperCase() + lootedItem.effect.slice(1)}: {lootedItem.effectValue}%</span>}
               </div>
             </div>
             <button className="btn-primary" onClick={() => setLootedItem(null)}>Continuar</button>
@@ -945,16 +1021,21 @@ const App = () => {
               {inventory.length > 0 ? (
                 <div className="inventory-items">
                   {inventory.map(item => (
-                    <div key={item.id} className={`item ${item.rarity.toLowerCase()}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div onClick={() => { equipItem(item); }} style={{ flex: 1, cursor: 'pointer' }}>
+                    <div key={item.id} className={`item ${item.rarity.toLowerCase()}`}>
+                      <div style={{ flex: 1 }}>
                         <strong>{item.name}</strong>
-                        <small>
+                        <small style={{ display: 'block' }}>
                           {item.strength > 0 && `💪+${item.strength} `}
                           {item.agility > 0 && `⚡+${item.agility} `}
-                          {item.hp > 0 && `HP+${item.hp}`}
+                          {item.intelligence > 0 && `🧠+${item.intelligence} `}
+                          {item.hp > 0 && `❤️+${item.hp} `}
+                          {item.effect && <span style={{ color: '#FFD700' }}>✨{item.effect}: {item.effectValue}%</span>}
                         </small>
                       </div>
-                      <button onClick={(e) => { e.stopPropagation(); discardItem(item.id); }} style={{ background: '#f44336', border: 'none', color: 'white', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer', fontSize: '0.8em', marginLeft: '10px' }}>🗑️</button>
+                      <div style={{ display: 'flex', gap: '5px' }}>
+                        <button onClick={() => equipItem(item)} style={{ background: '#667eea', border: 'none', color: 'white', padding: '8px 12px', borderRadius: '5px', cursor: 'pointer', fontSize: '0.9em' }}>✅</button>
+                        <button onClick={() => discardItem(item.id)} style={{ background: '#f44336', border: 'none', color: 'white', padding: '8px 12px', borderRadius: '5px', cursor: 'pointer', fontSize: '0.9em' }}>🗑️</button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1030,15 +1111,44 @@ const App = () => {
       <div className="main-content">
         <div className="actions">
           {!combat && levelUpPoints === 0 ? (
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-              <button onClick={startCombat} className="btn-primary" style={(player.bossCounter + 1) % 10 === 0 ? { background: 'linear-gradient(135deg, #FFD700, #FFA500)', color: '#000', fontWeight: 'bold', fontSize: '1.3em' } : {}}>
-                {(player.bossCounter + 1) % 10 === 0 ? '👑 ENFRENTAR O BOSS [B]' : 'Buscar Inimigo [B]'}
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexDirection: 'column', alignItems: 'center' }}>
+              <button onClick={() => setShowDungeonSelect(!showDungeonSelect)} className="btn-primary" style={{ background: 'linear-gradient(135deg, #9C27B0, #7B1FA2)' }}>
+                🏛️ {dungeons.find(d => d.id === currentDungeon)?.name}
               </button>
-              {(player.bossCounter + 1) % 10 === 0 && (
-                <button onClick={escapeBoss} className="btn-primary" style={{ background: 'linear-gradient(135deg, #f44336, #d32f2f)' }}>
-                  🏃 ESCAPAR
-                </button>
+              {showDungeonSelect && (
+                <div style={{ background: 'rgba(0,0,0,0.8)', padding: '15px', borderRadius: '10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', maxWidth: '500px' }}>
+                  {dungeons.map(dungeon => (
+                    <button 
+                      key={dungeon.id}
+                      onClick={() => { setCurrentDungeon(dungeon.id); setShowDungeonSelect(false); }}
+                      disabled={dungeon.id > player.unlockedDungeons}
+                      style={{ 
+                        padding: '10px', 
+                        background: currentDungeon === dungeon.id ? 'linear-gradient(135deg, #667eea, #764ba2)' : 'rgba(255,255,255,0.1)',
+                        border: 'none',
+                        borderRadius: '8px',
+                        color: 'white',
+                        cursor: dungeon.id > player.unlockedDungeons ? 'not-allowed' : 'pointer',
+                        opacity: dungeon.id > player.unlockedDungeons ? 0.3 : 1,
+                        fontSize: '0.9em'
+                      }}
+                    >
+                      {dungeon.icon} {dungeon.name}<br/>
+                      <small>Nv.{dungeon.minLevel}-{dungeon.maxLevel}</small>
+                    </button>
+                  ))}
+                </div>
               )}
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button onClick={startCombat} className="btn-primary" style={(player.bossCounter + 1) % 10 === 0 ? { background: 'linear-gradient(135deg, #FFD700, #FFA500)', color: '#000', fontWeight: 'bold', fontSize: '1.3em' } : {}}>
+                  {(player.bossCounter + 1) % 10 === 0 ? '👑 ENFRENTAR O BOSS [B]' : 'Buscar Inimigo [B]'}
+                </button>
+                {(player.bossCounter + 1) % 10 === 0 && (
+                  <button onClick={escapeBoss} className="btn-primary" style={{ background: 'linear-gradient(135deg, #f44336, #d32f2f)' }}>
+                    🏃 ESCAPAR
+                  </button>
+                )}
+              </div>
             </div>
           ) : levelUpPoints === 0 ? (
             <button onClick={playerAttack} className="btn-attack" disabled={enemy?.hp <= 0}>
