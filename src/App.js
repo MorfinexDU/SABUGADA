@@ -1316,8 +1316,7 @@ const App = () => {
 
       {showInventory && (
         <div className="modal-overlay" onClick={() => setShowInventory(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2>Equipamento e Inventário</h2>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
             <button className="close-btn" onClick={() => setShowInventory(false)}>×</button>
             
             <div className="equipment">
@@ -1326,9 +1325,18 @@ const App = () => {
                 <div className="equipment-row">
                   <div className="equipment-slot" onClick={() => unequipItem('helmet')}>
                     {equipment.helmet ? (
-                      <div className={`item ${equipment.helmet.rarity.toLowerCase()}`}>
-                        <strong>🧢 {equipment.helmet.name}</strong>
-                        <small>HP+{equipment.helmet.hp} 💪+{equipment.helmet.strength}</small>
+                      <div className={`item ${equipment.helmet.rarity.toLowerCase()}`} style={{ width: '100%' }}>
+                        <div style={{ flex: 1 }}>
+                          <strong>🧢 {equipment.helmet.name}</strong>
+                          <small style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '5px' }}>
+                            {equipment.helmet.strength > 0 && <span>💪+{equipment.helmet.strength}</span>}
+                            {equipment.helmet.agility > 0 && <span>⚡+{equipment.helmet.agility}</span>}
+                            {equipment.helmet.intelligence > 0 && <span>🧠+{equipment.helmet.intelligence}</span>}
+                            {equipment.helmet.hp > 0 && <span>❤️+{equipment.helmet.hp}</span>}
+                            {equipment.helmet.mana > 0 && <span>🔮+{equipment.helmet.mana}</span>}
+                            {equipment.helmet.effect && <span style={{ color: '#FFD700' }}>✨{equipment.helmet.effect}: {equipment.helmet.effectValue}%</span>}
+                          </small>
+                        </div>
                       </div>
                     ) : <div className="empty-slot">🧢 Capacete</div>}
                   </div>
@@ -1337,27 +1345,54 @@ const App = () => {
                 <div className="equipment-row">
                   <div className="equipment-slot" onClick={() => unequipItem('weapon')}>
                     {equipment.weapon ? (
-                      <div className={`item ${equipment.weapon.rarity.toLowerCase()}`}>
-                        <strong>⚔️ {equipment.weapon.name}</strong>
-                        <small>💪+{equipment.weapon.strength} ⚡+{equipment.weapon.agility}</small>
+                      <div className={`item ${equipment.weapon.rarity.toLowerCase()}`} style={{ width: '100%' }}>
+                        <div style={{ flex: 1 }}>
+                          <strong>⚔️ {equipment.weapon.name}</strong>
+                          <small style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '5px' }}>
+                            {equipment.weapon.strength > 0 && <span>💪+{equipment.weapon.strength}</span>}
+                            {equipment.weapon.agility > 0 && <span>⚡+{equipment.weapon.agility}</span>}
+                            {equipment.weapon.intelligence > 0 && <span>🧠+{equipment.weapon.intelligence}</span>}
+                            {equipment.weapon.hp > 0 && <span>❤️+{equipment.weapon.hp}</span>}
+                            {equipment.weapon.mana > 0 && <span>🔮+{equipment.weapon.mana}</span>}
+                            {equipment.weapon.effect && <span style={{ color: '#FFD700' }}>✨{equipment.weapon.effect}: {equipment.weapon.effectValue}%</span>}
+                          </small>
+                        </div>
                       </div>
                     ) : <div className="empty-slot">⚔️ Arma</div>}
                   </div>
                   
                   <div className="equipment-slot" onClick={() => unequipItem('chest')}>
                     {equipment.chest ? (
-                      <div className={`item ${equipment.chest.rarity.toLowerCase()}`}>
-                        <strong>🛡️ {equipment.chest.name}</strong>
-                        <small>HP+{equipment.chest.hp} 💪+{equipment.chest.strength}</small>
+                      <div className={`item ${equipment.chest.rarity.toLowerCase()}`} style={{ width: '100%' }}>
+                        <div style={{ flex: 1 }}>
+                          <strong>🛡️ {equipment.chest.name}</strong>
+                          <small style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '5px' }}>
+                            {equipment.chest.strength > 0 && <span>💪+{equipment.chest.strength}</span>}
+                            {equipment.chest.agility > 0 && <span>⚡+{equipment.chest.agility}</span>}
+                            {equipment.chest.intelligence > 0 && <span>🧠+{equipment.chest.intelligence}</span>}
+                            {equipment.chest.hp > 0 && <span>❤️+{equipment.chest.hp}</span>}
+                            {equipment.chest.mana > 0 && <span>🔮+{equipment.chest.mana}</span>}
+                            {equipment.chest.effect && <span style={{ color: '#FFD700' }}>✨{equipment.chest.effect}: {equipment.chest.effectValue}%</span>}
+                          </small>
+                        </div>
                       </div>
                     ) : <div className="empty-slot">🛡️ Peitoral</div>}
                   </div>
                   
                   <div className="equipment-slot" onClick={() => unequipItem('accessory')}>
                     {equipment.accessory ? (
-                      <div className={`item ${equipment.accessory.rarity.toLowerCase()}`}>
-                        <strong>💍 {equipment.accessory.name}</strong>
-                        <small>⚡+{equipment.accessory.agility} 💪+{equipment.accessory.strength}</small>
+                      <div className={`item ${equipment.accessory.rarity.toLowerCase()}`} style={{ width: '100%' }}>
+                        <div style={{ flex: 1 }}>
+                          <strong>💍 {equipment.accessory.name}</strong>
+                          <small style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '5px' }}>
+                            {equipment.accessory.strength > 0 && <span>💪+{equipment.accessory.strength}</span>}
+                            {equipment.accessory.agility > 0 && <span>⚡+{equipment.accessory.agility}</span>}
+                            {equipment.accessory.intelligence > 0 && <span>🧠+{equipment.accessory.intelligence}</span>}
+                            {equipment.accessory.hp > 0 && <span>❤️+{equipment.accessory.hp}</span>}
+                            {equipment.accessory.mana > 0 && <span>🔮+{equipment.accessory.mana}</span>}
+                            {equipment.accessory.effect && <span style={{ color: '#FFD700' }}>✨{equipment.accessory.effect}: {equipment.accessory.effectValue}%</span>}
+                          </small>
+                        </div>
                       </div>
                     ) : <div className="empty-slot">💍 Acessório</div>}
                   </div>
@@ -1366,9 +1401,18 @@ const App = () => {
                 <div className="equipment-row">
                   <div className="equipment-slot" onClick={() => unequipItem('legs')}>
                     {equipment.legs ? (
-                      <div className={`item ${equipment.legs.rarity.toLowerCase()}`}>
-                        <strong>🧤 {equipment.legs.name}</strong>
-                        <small>HP+{equipment.legs.hp} 💪+{equipment.legs.strength}</small>
+                      <div className={`item ${equipment.legs.rarity.toLowerCase()}`} style={{ width: '100%' }}>
+                        <div style={{ flex: 1 }}>
+                          <strong>🧤 {equipment.legs.name}</strong>
+                          <small style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '5px' }}>
+                            {equipment.legs.strength > 0 && <span>💪+{equipment.legs.strength}</span>}
+                            {equipment.legs.agility > 0 && <span>⚡+{equipment.legs.agility}</span>}
+                            {equipment.legs.intelligence > 0 && <span>🧠+{equipment.legs.intelligence}</span>}
+                            {equipment.legs.hp > 0 && <span>❤️+{equipment.legs.hp}</span>}
+                            {equipment.legs.mana > 0 && <span>🔮+{equipment.legs.mana}</span>}
+                            {equipment.legs.effect && <span style={{ color: '#FFD700' }}>✨{equipment.legs.effect}: {equipment.legs.effectValue}%</span>}
+                          </small>
+                        </div>
                       </div>
                     ) : <div className="empty-slot">🧤 Perneira</div>}
                   </div>
@@ -1377,9 +1421,18 @@ const App = () => {
                 <div className="equipment-row">
                   <div className="equipment-slot" onClick={() => unequipItem('boots')}>
                     {equipment.boots ? (
-                      <div className={`item ${equipment.boots.rarity.toLowerCase()}`}>
-                        <strong>🥾 {equipment.boots.name}</strong>
-                        <small>⚡+{equipment.boots.agility} 💪+{equipment.boots.strength}</small>
+                      <div className={`item ${equipment.boots.rarity.toLowerCase()}`} style={{ width: '100%' }}>
+                        <div style={{ flex: 1 }}>
+                          <strong>🥾 {equipment.boots.name}</strong>
+                          <small style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '5px' }}>
+                            {equipment.boots.strength > 0 && <span>💪+{equipment.boots.strength}</span>}
+                            {equipment.boots.agility > 0 && <span>⚡+{equipment.boots.agility}</span>}
+                            {equipment.boots.intelligence > 0 && <span>🧠+{equipment.boots.intelligence}</span>}
+                            {equipment.boots.hp > 0 && <span>❤️+{equipment.boots.hp}</span>}
+                            {equipment.boots.mana > 0 && <span>🔮+{equipment.boots.mana}</span>}
+                            {equipment.boots.effect && <span style={{ color: '#FFD700' }}>✨{equipment.boots.effect}: {equipment.boots.effectValue}%</span>}
+                          </small>
+                        </div>
                       </div>
                     ) : <div className="empty-slot">🥾 Botas</div>}
                   </div>
