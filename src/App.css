@@ -126,9 +126,9 @@ h2 {
 }
 
 .player-avatar {
-  width: 120px;
-  height: 120px;
-  margin: 0 auto 20px;
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 10px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -241,7 +241,7 @@ h2 {
   background: rgba(0,0,0,0.3);
   border-radius: 15px;
   overflow: hidden;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
 }
 
 .hp-fill {
@@ -272,7 +272,7 @@ h2 {
 .stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 2px;
   font-size: 0.9em;
 }
 
@@ -437,6 +437,8 @@ button:disabled {
 .btn-reset {
   background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
   margin-top: 0px !important;
+  padding: 8px 10px !important;
+  font-size: 0.85em !important;
 }
 
 .btn-reset:hover {
@@ -460,9 +462,9 @@ button:disabled {
   background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
   padding: 30px;
   border-radius: 15px;
-  max-width: 600px;
+  max-width: 1200px;
   width: 90%;
-  max-height: 80vh;
+  max-height: 85vh;
   overflow-y: auto;
   border: 2px solid rgba(255,255,255,0.2);
   position: relative;
@@ -699,9 +701,9 @@ button:disabled {
 
 .spell-btn {
   width: 100%;
-  padding: 10px;
-  margin-bottom: 8px;
-  font-size: 0.95em;
+  padding: 8px;
+  margin-bottom: 6px;
+  font-size: 0.85em;
   background: linear-gradient(135deg, #8a2be2 0%, #6a1bb2 100%);
   color: white;
   border: none;
@@ -751,7 +753,7 @@ button:disabled {
 
 .equipped-spells {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(4, 1fr);
   gap: 10px;
 }
 
@@ -760,12 +762,14 @@ button:disabled {
   padding: 10px;
   border-radius: 5px;
   display: flex;
-  gap: 10px;
+  flex-direction: column;
+  gap: 5px;
   align-items: center;
+  text-align: center;
 }
 
 .spellbook-list {
-  max-height: 400px;
+  max-height: 450px;
   overflow-y: auto;
 }
 
@@ -775,22 +779,30 @@ button:disabled {
 
 .spellbook-item {
   background: rgba(255,255,255,0.1);
-  padding: 10px;
+  padding: 12px;
   border-radius: 5px;
   margin-bottom: 8px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 15px;
+}
+
+.spell-info {
+  flex: 1;
 }
 
 .spell-info strong {
   display: block;
   margin-bottom: 3px;
+  font-size: 1.1em;
 }
 
 .spell-info small {
   opacity: 0.7;
-  font-size: 0.85em;
+  font-size: 0.9em;
+  display: block;
+  margin-bottom: 5px;
 }
 
 .spell-equip-btns {
@@ -825,18 +837,15 @@ button:disabled {
 }
 
 .spell-milestones {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 15px;
 }
 
 .milestone {
   background: rgba(0,0,0,0.4);
-  padding: 10px;
+  padding: 12px;
   border-radius: 8px;
-  text-align: center;
-  min-width: 80px;
   border: 2px solid;
 }
 
@@ -852,20 +861,29 @@ button:disabled {
 
 .milestone-level {
   font-weight: bold;
-  margin-bottom: 8px;
-  font-size: 0.9em;
+  margin-bottom: 10px;
+  font-size: 1em;
+  text-align: center;
 }
 
 .milestone-spells {
   display: flex;
-  gap: 5px;
-  justify-content: center;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.milestone-spell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9em;
+  padding: 5px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 4px;
 }
 
 .milestone-icon {
-  font-size: 1.3em;
-  cursor: help;
+  font-size: 1.5em;
 }
 
 .character-creation {

@@ -64,7 +64,7 @@ const App = () => {
   const [showInventory, setShowInventory] = useState(false);
   const [lootedItem, setLootedItem] = useState(null);
   const [mana, setMana] = useState(100);
-  const [maxMana] = useState(100);
+  const [maxMana, setMaxMana] = useState(100);
   const [equippedSpells, setEquippedSpells] = useState(['fireball', 'slow', 'stun', 'shock']);
   const [showSpellbook, setShowSpellbook] = useState(false);
   const [showShop, setShowShop] = useState(false);
@@ -76,11 +76,11 @@ const App = () => {
     { id: 'shock', name: 'Eletrificar', cost: 25, duration: 8000, type: 'shock', icon: '⚡', unlockLevel: 1, desc: 'Aumenta o dano recebido pelo inimigo em 50% por 8s' },
     { id: 'meteor', name: 'Meteoro', cost: 40, damage: 80, type: 'damage', icon: '☄️', unlockLevel: 10, desc: 'Invoca um meteoro causando grande dano mágico' },
     { id: 'heal', name: 'Cura', cost: 30, heal: 50, type: 'heal', icon: '❤️', unlockLevel: 10, desc: 'Restaura HP baseado em Inteligência' },
-    { id: 'freeze', name: 'Congelar', cost: 35, duration: 5000, dps: 8, type: 'freeze', icon: '❄️', unlockLevel: 20, desc: 'Congela o inimigo por 5s causando 8 de dano por segundo' },
-    { id: 'poison', name: 'Veneno', cost: 20, duration: 10000, dps: 5, type: 'poison', icon: '🧪', unlockLevel: 20, desc: 'Envenena o inimigo por 10s causando 5 de dano por segundo' },
+    { id: 'freeze', name: 'Congelar', cost: 35, duration: 5000, dps: 8, type: 'freeze', icon: '❄️', unlockLevel: 20, desc: 'Congela o inimigo por 5s causando dano por segundo baseado em Inteligência' },
+    { id: 'poison', name: 'Veneno', cost: 20, duration: 10000, dps: 5, type: 'poison', icon: '🧪', unlockLevel: 20, desc: 'Envenena o inimigo por 10s causando dano por segundo baseado em Inteligência' },
     { id: 'lightning', name: 'Relâmpago', cost: 50, damage: 120, type: 'damage', icon: '⚡', unlockLevel: 30, desc: 'Ataque elétrico devastador' },
     { id: 'shield', name: 'Escudo', cost: 40, duration: 10000, type: 'shield', icon: '🛡️', unlockLevel: 30, desc: 'Reduz o dano recebido em 50% por 10s' },
-    { id: 'drain', name: 'Drenar Vida', cost: 35, damage: 40, heal: 40, type: 'drain', icon: '🧛', unlockLevel: 40, desc: 'Causa dano e restaura HP' },
+    { id: 'drain', name: 'Drenar Vida', cost: 35, damage: 40, heal: 40, type: 'drain', icon: '🧛', unlockLevel: 40, desc: 'Causa dano e restaura HP baseado em Inteligência' },
     { id: 'haste', name: 'Acelerar', cost: 25, duration: 8000, type: 'haste', icon: '💨', unlockLevel: 40, desc: 'Aumenta sua velocidade de ataque por 8s' },
     { id: 'inferno', name: 'Inferno', cost: 60, damage: 150, type: 'damage', icon: '🔥', unlockLevel: 50, desc: 'Chamas infernais causam dano massivo' },
     { id: 'reflect', name: 'Refletir', cost: 45, duration: 12000, type: 'reflect', icon: '🔮', unlockLevel: 50, desc: 'Reflete 30% do dano recebido por 12s' },
@@ -132,11 +132,14 @@ const App = () => {
   }, [enemy]);
 
   useEffect(() => {
+    const bonus = getTotalStats();
+    const totalMaxMana = 100 + bonus.mana;
+    setMaxMana(totalMaxMana);
     manaRegenRef.current = setInterval(() => {
-      setMana(prev => Math.min(prev + 2 + Math.floor(player.vitality / 5), maxMana));
+      setMana(prev => Math.min(prev + 2 + Math.floor(player.vitality / 5), totalMaxMana));
     }, 1000);
     return () => clearInterval(manaRegenRef.current);
-  }, [maxMana, player.vitality]);
+  }, [player.vitality, equipment]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -188,19 +191,21 @@ const App = () => {
       strength: 0,
       agility: 0,
       intelligence: 0,
-      hp: 0
+      hp: 0,
+      mana: 0
     };
 
     const availableStats = [];
-    if (type === 'weapon') availableStats.push('strength', 'agility', 'intelligence');
-    else if (type === 'helmet' || type === 'chest' || type === 'legs') availableStats.push('hp', 'strength', 'intelligence');
-    else if (type === 'boots') availableStats.push('agility', 'hp', 'strength');
-    else if (type === 'accessory') availableStats.push('agility', 'intelligence', 'strength');
+    if (type === 'weapon') availableStats.push('strength', 'agility', 'intelligence', 'mana');
+    else if (type === 'helmet' || type === 'chest' || type === 'legs') availableStats.push('hp', 'strength', 'intelligence', 'mana');
+    else if (type === 'boots') availableStats.push('agility', 'hp', 'strength', 'mana');
+    else if (type === 'accessory') availableStats.push('agility', 'intelligence', 'strength', 'mana');
 
     const selectedStats = availableStats.slice(0, Math.min(numStats, availableStats.length));
     
     selectedStats.forEach(stat => {
       if (stat === 'hp') item.hp = baseStats * 10;
+      else if (stat === 'mana') item.mana = baseStats * 2;
       else item[stat] = baseStats + Math.floor(Math.random() * 5);
     });
 
@@ -222,13 +227,14 @@ const App = () => {
   };
 
   const getTotalStats = () => {
-    let bonus = { strength: 0, agility: 0, intelligence: 0, maxHp: 0, vampirism: 0, regeneration: 0, thorns: 0, speed: 0, crit: 0, resistance: 0 };
+    let bonus = { strength: 0, agility: 0, intelligence: 0, maxHp: 0, mana: 0, vampirism: 0, regeneration: 0, thorns: 0, speed: 0, crit: 0, resistance: 0 };
     Object.values(equipment).forEach(item => {
       if (item) {
         bonus.strength += item.strength;
         bonus.agility += item.agility;
         bonus.intelligence += item.intelligence;
         bonus.maxHp += item.hp;
+        bonus.mana += item.mana || 0;
         if (item.effect && item.effectValue) {
           if (item.effect === 'vampirismo') bonus.vampirism += item.effectValue;
           if (item.effect === 'regeneração') bonus.regeneration += item.effectValue;
@@ -305,7 +311,9 @@ const App = () => {
     setMana(prev => prev - spell.cost);
     
     if (spell.type === 'damage') {
-      const dmg = spell.damage + Math.floor(player.intelligence * 2);
+      const bonus = getTotalStats();
+      const totalInt = player.intelligence + bonus.intelligence;
+      const dmg = spell.damage + Math.floor(totalInt * 3.5);
       setEnemy(prev => ({ ...prev, hp: Math.max(0, prev.hp - dmg) }));
       addLog(`${spell.icon} ${spell.name}! ${dmg} de dano!`);
       showFloatingText(`${spell.icon} ${dmg}`, 'spell');
@@ -314,15 +322,20 @@ const App = () => {
         setTimeout(() => defeatEnemy(), 300);
       }
     } else if (spell.type === 'heal') {
-      const healAmount = spell.heal + Math.floor(player.intelligence);
-      setPlayer(prev => ({ ...prev, hp: Math.min(prev.hp + healAmount, prev.maxHp + getTotalStats().maxHp) }));
+      const bonus = getTotalStats();
+      const totalInt = player.intelligence + bonus.intelligence;
+      const healAmount = spell.heal + Math.floor(totalInt * 2);
+      setPlayer(prev => ({ ...prev, hp: Math.min(prev.hp + healAmount, prev.maxHp + bonus.maxHp) }));
       addLog(`${spell.icon} Curado ${healAmount} HP!`);
       triggerScreenEffect('heal');
     } else if (spell.type === 'drain') {
-      const dmg = spell.damage + Math.floor(player.intelligence * 2);
+      const bonus = getTotalStats();
+      const totalInt = player.intelligence + bonus.intelligence;
+      const dmg = spell.damage + Math.floor(totalInt * 3.5);
+      const healAmount = spell.heal + Math.floor(totalInt * 1.5);
       setEnemy(prev => ({ ...prev, hp: Math.max(0, prev.hp - dmg) }));
-      setPlayer(prev => ({ ...prev, hp: Math.min(prev.hp + spell.heal, prev.maxHp + getTotalStats().maxHp) }));
-      addLog(`${spell.icon} ${dmg} dano e +${spell.heal} HP!`);
+      setPlayer(prev => ({ ...prev, hp: Math.min(prev.hp + healAmount, prev.maxHp + bonus.maxHp) }));
+      addLog(`${spell.icon} ${dmg} dano e +${healAmount} HP!`);
       showFloatingText(`${spell.icon} ${dmg}`, 'drain');
       triggerScreenEffect('drain');
     } else if (spell.type === 'slow') {
@@ -342,8 +355,11 @@ const App = () => {
       addLog(`${spell.icon} Inimigo congelado!`);
       showFloatingText(`${spell.icon}`, 'effect');
       triggerScreenEffect('ice');
+      const bonus = getTotalStats();
+      const totalInt = player.intelligence + bonus.intelligence;
+      const freezeDps = spell.dps + Math.floor(totalInt * 0.5);
       const freezeInterval = setInterval(() => {
-        setEnemy(prev => prev ? ({ ...prev, hp: Math.max(0, prev.hp - spell.dps) }) : null);
+        setEnemy(prev => prev ? ({ ...prev, hp: Math.max(0, prev.hp - freezeDps) }) : null);
       }, 1000);
       setTimeout(() => {
         clearInterval(freezeInterval);
@@ -360,8 +376,11 @@ const App = () => {
       addLog(`${spell.icon} Veneno aplicado!`);
       showFloatingText(`${spell.icon}`, 'effect');
       triggerScreenEffect('poison');
+      const bonus = getTotalStats();
+      const totalInt = player.intelligence + bonus.intelligence;
+      const poisonDps = spell.dps + Math.floor(totalInt * 0.3);
       const poisonInterval = setInterval(() => {
-        setEnemy(prev => prev ? ({ ...prev, hp: Math.max(0, prev.hp - spell.dps) }) : null);
+        setEnemy(prev => prev ? ({ ...prev, hp: Math.max(0, prev.hp - poisonDps) }) : null);
       }, 1000);
       setTimeout(() => {
         clearInterval(poisonInterval);
@@ -457,9 +476,9 @@ const App = () => {
       return {
         name: isFinalBoss ? `👑 BOSS FINAL Nv.${difficulty}` : `👑 BOSS ${bossLevel} Nv.${difficulty}`,
         level: difficulty,
-        hp: (240 + difficulty * 100) * 3,
-        maxHp: (240 + difficulty * 100) * 3,
-        strength: (12 + difficulty * 6) * 1.5,
+        hp: (240 + difficulty * 150) * 3,
+        maxHp: (240 + difficulty * 150) * 3,
+        strength: (12 + difficulty * 8) * 1.5,
         agility: (8 + difficulty * 3) * 1.5,
         intelligence: (8 + difficulty * 3) * 1.5,
         attackSpeed: speed * 0.8,
@@ -473,9 +492,9 @@ const App = () => {
     return {
       name: `Inimigo Nv.${difficulty}`,
       level: difficulty,
-      hp: 240 + difficulty * 100,
-      maxHp: 240 + difficulty * 100,
-      strength: 12 + difficulty * 6,
+      hp: 240 + difficulty * 150,
+      maxHp: 240 + difficulty * 150,
+      strength: 12 + difficulty * 8,
       agility: 8 + difficulty * 3,
       intelligence: 8 + difficulty * 3,
       attackSpeed: speed,
@@ -1205,11 +1224,32 @@ const App = () => {
 
             <div className="spellbook-list">
               <h3>Magias Disponíveis</h3>
-              {allSpells.filter(s => s.unlockLevel <= player.level).map(spell => (
+              {allSpells.filter(s => s.unlockLevel <= player.level).map(spell => {
+                const bonus = getTotalStats();
+                const totalInt = player.intelligence + bonus.intelligence;
+                let damageInfo = '';
+                if (spell.type === 'damage') {
+                  const dmg = spell.damage + Math.floor(totalInt * 2);
+                  damageInfo = ` | Dano: ${dmg}`;
+                } else if (spell.type === 'heal') {
+                  const heal = spell.heal + Math.floor(totalInt * 1);
+                  damageInfo = ` | Cura: ${heal}`;
+                } else if (spell.type === 'drain') {
+                  const dmg = spell.damage + Math.floor(totalInt * 2);
+                  const heal = spell.heal + Math.floor(totalInt * 1);
+                  damageInfo = ` | Dano: ${dmg} / Cura: ${heal}`;
+                } else if (spell.type === 'freeze') {
+                  const dps = spell.dps + Math.floor(totalInt * 0.3);
+                  damageInfo = ` | DPS: ${dps}`;
+                } else if (spell.type === 'poison') {
+                  const dps = spell.dps + Math.floor(totalInt * 0.2);
+                  damageInfo = ` | DPS: ${dps}`;
+                }
+                return (
                 <div key={spell.id} className="spellbook-item">
                   <div className="spell-info">
                     <strong>{spell.icon} {spell.name}</strong>
-                    <small>Custo: {spell.cost} mana | Nível {spell.unlockLevel}</small>
+                    <small>Custo: {spell.cost} mana | Nível {spell.unlockLevel}{damageInfo}</small>
                     <div style={{ fontSize: '0.85em', opacity: 0.8, marginTop: '5px', fontStyle: 'italic' }}>{spell.desc}</div>
                   </div>
                   <div className="spell-equip-btns">
@@ -1224,7 +1264,8 @@ const App = () => {
                     ))}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="spell-progression">
@@ -1235,12 +1276,13 @@ const App = () => {
                   const isUnlocked = player.level >= level;
                   return (
                     <div key={level} className={`milestone ${isUnlocked ? 'unlocked' : 'locked'}`}>
-                      <div className="milestone-level">Nv.{level}</div>
+                      <div className="milestone-level">Nível {level}</div>
                       <div className="milestone-spells">
                         {spellsAtLevel.map(spell => (
-                          <span key={spell.id} className="milestone-icon" title={spell.name}>
-                            {spell.icon}
-                          </span>
+                          <div key={spell.id} className="milestone-spell">
+                            <span className="milestone-icon">{spell.icon}</span>
+                            <span style={{ flex: 1 }}>{spell.name}</span>
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -1263,6 +1305,7 @@ const App = () => {
                 {lootedItem.agility > 0 && <span>⚡ Agilidade: +{lootedItem.agility}</span>}
                 {lootedItem.intelligence > 0 && <span>🧠 Inteligência: +{lootedItem.intelligence}</span>}
                 {lootedItem.hp > 0 && <span>❤️ HP: +{lootedItem.hp}</span>}
+                {lootedItem.mana > 0 && <span>🔮 Mana: +{lootedItem.mana}</span>}
                 {lootedItem.effect && <span style={{ color: '#FFD700', fontWeight: 'bold' }}>✨ {lootedItem.effect.charAt(0).toUpperCase() + lootedItem.effect.slice(1)}: {lootedItem.effectValue}%</span>}
               </div>
             </div>
@@ -1361,6 +1404,7 @@ const App = () => {
                           {item.agility > 0 && `⚡+${item.agility} `}
                           {item.intelligence > 0 && `🧠+${item.intelligence} `}
                           {item.hp > 0 && `❤️+${item.hp} `}
+                          {item.mana > 0 && `🔮+${item.mana} `}
                           {item.effect && <span style={{ color: '#FFD700' }}>✨{item.effect}: {item.effectValue}%</span>}
                         </small>
                       </div>
@@ -1391,6 +1435,7 @@ const App = () => {
                 {lootedItem.agility > 0 && <span>⚡ Agilidade: +{lootedItem.agility}</span>}
                 {lootedItem.intelligence > 0 && <span>🧠 Inteligência: +{lootedItem.intelligence}</span>}
                 {lootedItem.hp > 0 && <span>❤️ HP: +{lootedItem.hp}</span>}
+                {lootedItem.mana > 0 && <span>🔮 Mana: +{lootedItem.mana}</span>}
                 {lootedItem.effect && <span style={{ color: '#FFD700', fontWeight: 'bold' }}>✨ {lootedItem.effect.charAt(0).toUpperCase() + lootedItem.effect.slice(1)}: {lootedItem.effectValue}%</span>}
               </div>
             </div>
@@ -1810,11 +1855,17 @@ const App = () => {
             <div className="xp-fill" style={{ width: `${(mana / maxMana) * 100}%`, background: 'linear-gradient(90deg, #4444ff, #6666ff)' }}></div>
             <span>{mana} / {maxMana} Mana</span>
           </div>
+          <h4 style={{ fontSize: '0.9em', marginTop: '10px', marginBottom: '5px', opacity: 0.8 }}>⚔️ Atributos</h4>
           <div className="stats">
             <span title="Aumenta o dano base dos ataques">💪 Força: {player.strength + getTotalStats().strength}</span>
             <span title="Aumenta chance de crítico (x2 dano)">⚡ Agilidade: {player.agility + getTotalStats().agility}</span>
             <span title="Aumenta dano de magias">🧠 Inteligência: {player.intelligence + getTotalStats().intelligence}</span>
             <span title="Regenera HP e Mana">❤️ Vitalidade: {player.vitality}</span>
+          </div>
+          <h4 style={{ fontSize: '0.9em', marginTop: '10px', marginBottom: '5px', opacity: 0.8 }}>📊 Status</h4>
+          <div className="stats">
+            <span title="Dano base dos ataques físicos">⚔️ Dano: {Math.floor((player.strength + getTotalStats().strength) * 0.6 * 0.8)}-{Math.floor((player.strength + getTotalStats().strength) * 0.6 * 1.2)}</span>
+            <span title="Chance de acerto crítico">🎯 Crítico: {((player.agility + getTotalStats().agility) / 200 * 100).toFixed(1)}%</span>
             <span>💀 Abates: {player.kills}</span>
             <span>🌽 Sabugos: {player.sabugos || 0}</span>
           </div>
