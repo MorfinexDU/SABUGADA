@@ -976,7 +976,7 @@ button:disabled {
   background: rgba(102,126,234,0.3);
 }
 
-.equipment, .inventory {
+.equipment {
   background: rgba(255,255,255,0.1);
   padding: 15px;
   border-radius: 10px;
@@ -985,6 +985,19 @@ button:disabled {
   overflow: visible;
   display: flex;
   flex-direction: column;
+  flex: 1.5;
+}
+
+.inventory {
+  background: rgba(255,255,255,0.1);
+  padding: 15px;
+  border-radius: 10px;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255,255,255,0.2);
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .equipment h3, .inventory h3 {
@@ -1005,7 +1018,6 @@ button:disabled {
   justify-content: center;
   gap: 15px;
   max-width: 600px;
-  margin: auto;
   padding: 20px 0;
   flex: 1;
 }
@@ -1024,7 +1036,7 @@ button:disabled {
 
 .equipment-slot {
   cursor: pointer;
-  min-height: 90px;
+  min-height: 100px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1032,7 +1044,7 @@ button:disabled {
 
 .item {
   background: rgba(0,0,0,0.3);
-  padding: 12px;
+  padding: 15px;
   border-radius: 8px;
   border-left: 4px solid;
   transition: all 0.2s;
@@ -1042,6 +1054,7 @@ button:disabled {
   align-items: center;
   gap: 10px;
   pointer-events: auto;
+  min-height: 80px;
 }
 
 .item button {
